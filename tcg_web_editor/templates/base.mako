@@ -27,10 +27,13 @@
     <div class="navbar navbar-inverse navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
-          <a class="brand" href="/">Pokébeach Card Database Editor</a>
+          <a class="brand" href="${h.url('/')}">Pokébeach Card Database Editor</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              <li class="active"><a href="/">Home</a></li>
+              <% # TODO: figure out what's "active"
+              %>
+              <li class="active"><a href="${h.url('/')}">Home</a></li>
+              <li class="active"><a href="${h.url('/sets')}">Sets</a></li>
             </ul>
           </div>
         </div>

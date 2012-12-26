@@ -17,7 +17,7 @@ def make_app(global_config, **settings):
 
     settings.setdefault('mako.directories', 'tcg_web_editor:templates/')
     config = Configurator(
-        root_factory=Root,
+        root_factory=Root.factory,
         request_factory=SQLARequest,
         settings=settings,
     )
