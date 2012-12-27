@@ -7,19 +7,26 @@ from ptcgdex import tcg_tables
 
 from tcg_web_editor.template_helpers import Helpers
 
+_UNDEFINED = object()
 
 class Resource(object):
-    def __init__(self, parent, name, request=None):
+    def __init__(self, parent, name=_UNDEFINED, request=None):
         self.__parent__ = self.parent = parent
-        try:
-            self.__name__ = self.name = name
-        except AttributeError:
-            pass
+        if name is not _UNDEFINED:
+            self.name = name
         if request is None:
             self.request = parent.request
         else:
             self.request = request
         self._child_objects = {}
+        self.init()
+
+    def init(self):
+        pass
+
+    @reify
+    def __name__(self):
+        return self.name
 
     @reify
     def url(self):
@@ -70,15 +77,31 @@ class TemplateResource(Resource):
 class Sets(TemplateResource):
     template_name = 'sets.mako'
 
-    def __call__(self):
-        return self.render_response(
-            sets=self.request.db.query(tcg_tables.Set).all(),
-        )
+    def init(self):
+        self.sets = self.request.db.query(tcg_tables.Set).all()
+        self.sets_by_identifier = {s.identifier: s for s in self.sets}
+
+    def get(self, set_ident):
+        return self.wrap(self.sets_by_identifier[set_ident])
+
+    def wrap(self, tcg_set):
+        return Set(self, tcg_set)
+
+
+class Set(TemplateResource):
+    template_name = 'set.mako'
+
+    def __init__(self, parent, tcg_set):
+        self.tcg_set = tcg_set
+        super(Set, self).__init__(parent)
+
+    @reify
+    def name(self):
+        return self.tcg_set.identifier
 
 
 class Root(TemplateResource):
     template_name = 'index.mako'
-    __name__ = __parent__ = None
 
     @classmethod
     def factory(cls, request):

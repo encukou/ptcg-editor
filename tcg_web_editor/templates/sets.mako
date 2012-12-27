@@ -2,7 +2,7 @@
 
 <div class="container">
 
-    <h1>Pokébeach Card Database Editor</h1>
+    <h1>The Set List</h1>
 
     <table class="table">
     <thead>
@@ -14,10 +14,10 @@
         </tr>
     </thead>
     <tbody>
-    % for tcg_set in sets:
+    % for tcg_set in this.sets:
         <tr>
             <td>${tcg_set.total or '?'}</td>
-            <td>${tcg_set.name}</td>
+            <td><a href="${this.wrap(tcg_set).url}">${tcg_set.name}</a></td>
             <td>${tcg_set.release_date or '?'}</td>
             <td>${tcg_set.ban_date or '?'}</td>
         </tr>
