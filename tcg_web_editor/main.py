@@ -11,11 +11,12 @@ def view(context, request):
     return context()
 
 def make_app(global_config, **settings):
+    settings.setdefault('mako.directories', 'tcg_web_editor:templates/')
+    settings.setdefault('mako.input_encoding', 'utf-8')
 
     class SQLARequest(Request):
         db = connect()
 
-    settings.setdefault('mako.directories', 'tcg_web_editor:templates/')
     config = Configurator(
         root_factory=Root.factory,
         request_factory=SQLARequest,

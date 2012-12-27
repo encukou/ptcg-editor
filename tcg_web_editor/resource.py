@@ -1,11 +1,12 @@
 from pyramid.response import Response
 from pyramid.renderers import render
-from pyramid.traversal import find_interface, resource_path
+from pyramid.traversal import find_interface, resource_path, traverse
 from pyramid.decorator import reify
+from pyramid.location import lineage
 
 from ptcgdex import tcg_tables
 
-from tcg_web_editor.template_helpers import Helpers
+from tcg_web_editor import template_helpers as helpers
 
 _UNDEFINED = object()
 
@@ -29,8 +30,31 @@ class Resource(object):
         return self.name
 
     @reify
+    def friendly_name(self):
+        return self.name
+
+    @reify
+    def short_name(self):
+        return self.friendly_name
+
+    @reify
     def url(self):
         return self.request.resource_url(self)
+
+    def traverse(self, path):
+        if path.startswith('/'):
+            context = self.root
+            path = path[1:]
+        else:
+            context = self
+        result = traverse(context, path)
+        if result['view_name']:
+            raise KeyError(result['view_name'])
+        return result['context']
+
+    @reify
+    def lineage(self):
+        return list(lineage(self))
 
     def __resource_url__(self, request, info):
         return request.application_url + info['virtual_path'].rstrip('/')
@@ -64,7 +88,7 @@ class Resource(object):
 class TemplateResource(Resource):
     def render_response(self, template_name=None, **kwargs):
         kwargs.setdefault('this', self)
-        kwargs.setdefault('h', Helpers(self))
+        kwargs.setdefault('h', helpers)
         kwargs.setdefault('request', self.request)
         if template_name is None:
             template_name = self.template_name
@@ -76,6 +100,7 @@ class TemplateResource(Resource):
 
 class Sets(TemplateResource):
     template_name = 'sets.mako'
+    friendly_name = 'Sets'
 
     def init(self):
         self.sets = self.request.db.query(tcg_tables.Set).all()
@@ -99,9 +124,15 @@ class Set(TemplateResource):
     def name(self):
         return self.set.identifier
 
+    @reify
+    def friendly_name(self):
+        return self.set.name
+
 
 class Root(TemplateResource):
     template_name = 'index.mako'
+    friendly_name = u'Pok\xe9beach Card Database Editor'
+    short_name = 'Home'
 
     @classmethod
     def factory(cls, request):

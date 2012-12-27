@@ -2,7 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Pokébeach Card Database Editor</title>
+    % if this is this.root:
+        <title>${this.friendly_name}</title>
+    % else:
+        <title>${this.friendly_name} – ${this.root.friendly_name}</title>
+    % endif
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -27,13 +31,10 @@
     <div class="navbar navbar-inverse navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
-          <a class="brand" href="${h.url('/')}">Pokébeach Card Database Editor</a>
+          <a class="brand" href="${this.root.url}">Pokébeach Card Database Editor</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              <% # TODO: figure out what's "active"
-              %>
-              <li class="active"><a href="${h.url('/')}">Home</a></li>
-              <li class="active"><a href="${h.url('/sets')}">Sets</a></li>
+              ${h.nav_tabs(this, ('/', '/sets'))}
             </ul>
           </div>
         </div>

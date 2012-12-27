@@ -10,6 +10,7 @@ args = dict(
         'pyramid',
         'pyramid_debugtoolbar',
         'waitress',
+        'markupsafe',
         'mako',
     ],
 
