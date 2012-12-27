@@ -34,11 +34,20 @@
           <a class="brand" href="${this.root.url}">Pokébeach Card Database Editor</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              ${h.nav_tabs(this, ('/', '/sets'))}
+              ${h.nav_tabs(this, ('/', '/sets', '/prints'))}
             </ul>
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="container">
+        <ul class="breadcrumb">
+            % for obj in reversed(this.lineage[1:]):
+                <li><a href="${obj.url}">${obj.short_name}</a> <span class="divider">/</span></li>
+            % endfor
+            <li class="active">${this.short_name}</li>
+        </ul>
     </div>
 
     ${next.body()}

@@ -23,6 +23,7 @@ def make_app(global_config, **settings):
         settings=settings,
     )
     config.add_static_view('assets', 'tcg_web_editor:assets')
+    config.add_static_view('scans', 'tcg_web_editor:scans')
 
     config.add_view(view, context=Resource)
     return config.make_wsgi_app()

@@ -1,3 +1,5 @@
+# Encoding: UTF-8
+
 from pyramid.response import Response
 from pyramid.renderers import render
 from pyramid.traversal import find_interface, resource_path, traverse
@@ -129,9 +131,40 @@ class Set(TemplateResource):
         return self.set.name
 
 
+class Prints(TemplateResource):
+    template_name = 'prints.mako'
+    friendly_name = 'Card Prints'
+    short_name = 'Prints'
+
+    def init(self):
+        self.print_query = self.request.db.query(tcg_tables.Print)
+
+    def get(self, print_id):
+        return self.wrap(self.print_query.get(print_id))
+
+    def wrap(self, print_):
+        return Print(self, print_)
+
+
+class Print(TemplateResource):
+    template_name = 'print.mako'
+
+    def __init__(self, parent, print_):
+        self.print_ = print_
+        super(Print, self).__init__(parent)
+
+    @reify
+    def name(self):
+        return self.print_.id
+
+    @reify
+    def friendly_name(self):
+        return self.print_.card.name
+
+
 class Root(TemplateResource):
     template_name = 'index.mako'
-    friendly_name = u'Pok\xe9beach Card Database Editor'
+    friendly_name = u'Pokébeach Card Database Editor'
     short_name = 'Home'
 
     @classmethod
@@ -144,3 +177,4 @@ class Root(TemplateResource):
         )
 
     child_sets = Sets
+    child_prints = Prints
