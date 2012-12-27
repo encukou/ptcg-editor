@@ -92,12 +92,12 @@ class Set(TemplateResource):
     template_name = 'set.mako'
 
     def __init__(self, parent, tcg_set):
-        self.tcg_set = tcg_set
+        self.set = tcg_set
         super(Set, self).__init__(parent)
 
     @reify
     def name(self):
-        return self.tcg_set.identifier
+        return self.set.identifier
 
 
 class Root(TemplateResource):

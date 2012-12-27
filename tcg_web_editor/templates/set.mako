@@ -2,8 +2,27 @@
 
 <div class="container">
 
-    <h1>${this.tcg_set.name}</h1>
+    <h1>${this.set.name}</h1>
 
-    <p>${this.tcg_set.name} is a set nominally containing ${this.tcg_set.total} cards.</p>
+    <p>${this.set.name} is a set nominally containing ${this.set.total} cards:</p>
+
+    <table class="table">
+    <thead>
+        <tr>
+            <th>No.</th>
+            <th>Card</th>
+            <th>Class</th>
+        </tr>
+    </thead>
+    <tbody>
+    % for print_ in this.set.prints:
+        <tr>
+            <td>${print_.set_number}</td>
+            <td>${print_.card.name}</td>
+            <td>${print_.card.class_.name}</td>
+        </tr>
+    % endfor
+    </tbody>
+    </table>
 
 </div>
