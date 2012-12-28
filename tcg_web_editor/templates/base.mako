@@ -59,7 +59,7 @@
           <a class="brand" href="${this.root.url}">Pokébeach Card Database Editor</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              ${h.nav_tabs(this, ('/', '/sets', '/prints'))}
+              ${h.nav_tabs(this, ('/', '/sets', '/families'))}
             </ul>
           </div>
         </div>
@@ -78,6 +78,7 @@
     <script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
     <script src="../assets/js/bootstrap.js"></script>
     <script type="text/javascript">$(".ptcg-type").tooltip()</script>
+    <script type="text/javascript">$(".tooltipped").tooltip()</script>
 
   </body>
 </html>

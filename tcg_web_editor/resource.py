@@ -1,11 +1,17 @@
 # Encoding: UTF-8
 
+from __future__ import unicode_literals
+
+import string
+
 from pyramid.response import Response
 from pyramid.renderers import render
 from pyramid.traversal import find_interface, resource_path, traverse
 from pyramid.decorator import reify
 from pyramid.location import lineage
+from sqlalchemy import func
 
+from pokedex.db import util as dbutil
 from ptcgdex import tcg_tables
 
 from tcg_web_editor import template_helpers as helpers
@@ -162,6 +168,83 @@ class Print(TemplateResource):
         return self.print_.card.name
 
 
+class Families(TemplateResource):
+    template_name = 'families.mako'
+
+    def __init__(self, parent, name, first_letter=None):
+        if first_letter and first_letter.islower():
+            self.first_letter = first_letter
+            self.base_families = parent
+        else:
+            self.first_letter = None
+            self.base_families = self
+        super(Families, self).__init__(parent, name)
+
+    def init(self):
+        query = self.request.db.query(tcg_tables.CardFamily)
+        query = dbutil.order_by_name(query, tcg_tables.CardFamily)
+        self.family_query = query
+        if self.first_letter:
+            self.filtered_query = query.filter(
+                func.lower(tcg_tables.CardFamily.names_table.name).like(
+                    '{}%'.format(self.first_letter)))
+        else:
+            self.filtered_query = query.filter(
+                ~func.lower(func.substr(
+                        tcg_tables.CardFamily.names_table.name, 1, 1)).in_(
+                    string.ascii_lowercase))
+
+    def get(self, family_identifier):
+        if self is not self.base_families:
+            return self.base_families[family_identifier]
+        if len(family_identifier) == 1:
+            return Families(
+                self.base_families, family_identifier, family_identifier)
+        print family_identifier, self.family_query
+        family = self.family_query.filter(
+            tcg_tables.CardFamily.identifier == family_identifier).one()
+        return self.wrap(family)
+
+    def wrap(self, family):
+        if self is not self.base_families:
+            return self.base_families.wrap(family)
+        return Family(self, family)
+
+    @reify
+    def friendly_name(self):
+        if self.first_letter:
+            return 'Card Families ({})'.format(self.first_letter.upper())
+        else:
+            return 'Card Families'
+
+    @reify
+    def short_name(self):
+        if self.first_letter:
+            return self.first_letter.upper()
+        else:
+            return 'Card Families'
+
+
+class Family(TemplateResource):
+    template_name = 'family.mako'
+
+    def __init__(self, parent, family):
+        self.family = family
+        super(Family, self).__init__(parent)
+
+    @reify
+    def name(self):
+        return self.family.identifier
+
+    @reify
+    def friendly_name(self):
+        return 'Cards named "{}"'.format(self.family.name)
+
+    @reify
+    def short_name(self):
+        return self.family.name
+
+
 class Root(TemplateResource):
     template_name = 'index.mako'
     friendly_name = u'Pokébeach Card Database Editor'
@@ -178,3 +261,4 @@ class Root(TemplateResource):
 
     child_sets = Sets
     child_prints = Prints
+    child_families = Families

@@ -32,9 +32,11 @@ flavor = print_.pokemon_flavor
         % if card.types or card.stage:
         <dl class="row-fluid">
             <dt class="span2">Type</dt>
-            <dd class="span4">${'/'.join(t.name for t in card.types)}</dd>
+            <dd class="span4">${'/'.join(t.name for t in card.types) or Markup('&nbsp;')}</dd>
+            % if card.stage:
             <dt class="span2">Stage</dt>
             <dd class="span4">${card.stage.name}</dd>
+            % endif
         </dl>
         % endif
         % if card.retreat_cost is not None or card.hp:
@@ -148,25 +150,35 @@ flavor = print_.pokemon_flavor
 
         % if len(card.family.cards) > 1:
             <h2>All ${card.name} cards</h2>
-            % for other_card in card.family.cards:
-                <%
-                    other_print = other_card.prints[0]
-                %>
-                <div class="row-fluid">
-                    <span class="span12">
-                        % if other_card is card:
-                            ${other_print.set.name} #${other_print.set_number}
-                        % else:
-                        <a href="${this.root['prints'].wrap(other_print).url}">
-                            ${other_print.set.name} #${other_print.set_number}
-                        </a>
-                        % endif
-                        –
-                        ${other_card.name}
-                        ${h.card_named_mechanic_note(other_card)}
-                    </span>
+            <div class="row-fluid">
+                <div class="well">
+                % for other_card in card.family.cards:
+                    <%
+                        other_print = other_card.prints[0]
+                    %>
+                    <div class="row-fluid">
+                        <span class="span12">
+                            % if other_card is card:
+                                ${other_print.set.name} #${other_print.set_number}
+                            % else:
+                            <a href="${this.root['prints'].wrap(other_print).url}">
+                                ${other_print.set.name} #${other_print.set_number}
+                            </a>
+                            % endif
+                            –
+                            ${other_card.name}
+                            ${h.card_named_mechanic_note(other_card)}
+                        </span>
+                    </div>
+                % endfor
                 </div>
-            % endfor
+            </div>
+
+            <p>
+                See the
+                <a href="${this.root['families'].wrap(card.family).url}">${card.name} card family</a>
+                for more details.
+            </p>
         % endif
 
     </div>

@@ -15,7 +15,6 @@
         <tr>
             <th>No.</th>
             <th>Card</th>
-            <th>Class</th>
         </tr>
     </thead>
     <tbody>
@@ -39,7 +38,6 @@
                     </span>
                 </a>
             </td>
-            <td>${print_.card.class_.name}</td>
         </tr>
     % endfor
     </tbody>
