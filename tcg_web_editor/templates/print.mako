@@ -38,23 +38,7 @@ flavor = print_.pokemon_flavor
         </dl>
         % endif
 
-        % if card.mechanics:
-        <h2>Mechanics</h2>
-        % for mechanic in card.mechanics:
-        <div class="row-fluid">
-            <span class="span2">
-            ${mechanic.class_.name if mechanic.class_.identifier != 'attack' else ''}
-            ${''.join('[{}]'.format(cost.type.initial) * cost.amount for cost in mechanic.costs)}
-            </span>
-            <span class="span2">${mechanic.name or ''}</span>
-            <span class="span6">${unicode(mechanic.effect)}</span>
-            <span class="span2">${mechanic.damage_base or ''}${mechanic.damage_modifier or ''}</span>
-        </div>
-        % endfor
-        % endif
-
         % if card.damage_modifiers:
-        <h2>Damage modifiers</h2>
         % for mod in card.damage_modifiers:
         <dl class="row-fluid">
             % if mod.operation in '-':
@@ -69,7 +53,26 @@ flavor = print_.pokemon_flavor
         % endfor
         % endif
 
-        <h2>Flavor</h2>
+        % if card.mechanics:
+        % for mechanic in card.mechanics:
+        <hr>
+        <div class="row-fluid">
+            <span class="span2">
+            ${mechanic.class_.name if mechanic.class_.identifier != 'attack' else ''}
+            % for cost in mechanic.costs:
+                % for i in range(cost.amount):
+<span class="ptcg-type ptcg-type-${cost.type.initial}">[${cost.type.initial}]</span>\
+                % endfor
+            % endfor
+            </span>
+            <span class="span2">${mechanic.name or ''}</span>
+            <span class="span6">${unicode(mechanic.effect or '')}</span>
+            <span class="span2">${mechanic.damage_base or ''}${mechanic.damage_modifier or ''}</span>
+        </div>
+        % endfor
+        % endif
+
+        <h2>Print</h2>
         % if flavor:
             % if flavor.species:
             <dl class="row-fluid">
@@ -100,6 +103,12 @@ flavor = print_.pokemon_flavor
             % endif
         % endif
         <dl class="row-fluid">
+            <dt class="span2">Rarity</dt>
+            <dd class="span4">${print_.rarity.name}</dd>
+            <dt class="span2">Holographic</dt>
+            <dd class="span4">${'Yes' if print_.holographic else 'No'}</dd>
+        </dl>
+        <dl class="row-fluid">
             <dt class="span2">Illustrator</dt>
             <dd class="span10">${print_.illustrator.name}</dd>
         </dl>
@@ -117,10 +126,7 @@ flavor = print_.pokemon_flavor
 set: aquapolis
 number: H1
 order: 0
-rarity: rare
-holographic: true
 evolves from: Flaaffy
 legal: false
-filename: h1-ampharos
 '''
 %>

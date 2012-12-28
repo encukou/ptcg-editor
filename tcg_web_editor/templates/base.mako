@@ -12,6 +12,7 @@
     <meta name="author" content="">
 
     <link href="../assets/css/bootstrap.css" rel="stylesheet">
+    <link href="../assets/css/ptcg-symbols.css" rel="stylesheet">
     <style>
       body {
         padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
@@ -41,14 +42,12 @@
       </div>
     </div>
 
-    <div class="container">
-        <ul class="breadcrumb">
-            % for obj in reversed(this.lineage[1:]):
-                <li><a href="${obj.url}">${obj.short_name}</a> <span class="divider">/</span></li>
-            % endfor
-            <li class="active">${this.short_name}</li>
-        </ul>
-    </div>
+    <ul class="breadcrumb">
+        % for obj in reversed(this.lineage[1:]):
+            <li><a href="${obj.url}">${obj.short_name}</a> <span class="divider">/</span></li>
+        % endfor
+        <li class="active">${this.short_name}</li>
+    </ul>
 
     ${next.body()}
 

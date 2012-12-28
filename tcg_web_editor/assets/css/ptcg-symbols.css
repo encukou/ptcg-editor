@@ -1,0 +1,63 @@
+@font-face {
+  font-family: 'PTCG Symbols';
+  font-style: normal;
+  font-weight: 400;
+  src: url("/assets/fonts/ptcg-symbols.woff") format('woff');
+}
+
+.ptcg-type {
+    display: inline-block;
+    height: 1em;
+    width: 1em;
+    border-radius: 1em;
+    border: 0.4pt solid black;
+    font-family: 'PTCG Symbols';
+    text-transform: lowercase;
+    margin-right: 0.2ex;
+    color: black;
+}
+
+.ptcg-type-C {
+    background: #cccccc;
+    background: radial-gradient(ellipse at 75% 25%, #ffffff 0%,#a8a8a8 100%);
+}
+
+.ptcg-type-L {
+    background: #FDF947;
+    background: radial-gradient(ellipse at 75% 25%, #ffffff 0%,#FDF947 15%,#7A4B00 100%);
+}
+
+.ptcg-type-R {
+    background: #FF7F2F;
+    background: radial-gradient(ellipse at 75% 25%, #ffffff 0%,#FF7F2F 15%,#A01D00 100%);
+}
+
+.ptcg-type-G {
+    background: #99B837;
+    background: radial-gradient(ellipse at 75% 25%, #ffffff 0%,#99B837 15%,#3A6C27 100%);
+}
+
+.ptcg-type-W {
+    background: #5FA8DA;
+    background: radial-gradient(ellipse at 75% 25%, #ffffff 0%,#72C4F2 15%,#214B8C 100%);
+}
+
+.ptcg-type-P {
+    background: #C593A7;
+    background: radial-gradient(ellipse at 75% 25%, #ffffff 0%,#EFB4C8 15%,#402B40 100%);
+}
+
+.ptcg-type-F {
+    background: #D04406;
+    background: radial-gradient(ellipse at 75% 25%, #ffffff 0%,#E76800 15%,#722C15 100%);
+}
+
+.ptcg-type-D {
+    background: #336585;
+    background: radial-gradient(ellipse at 75% 25%, #ffffff 0%,#437292 15%,#336585 50%,#1B1B1B 100%);
+}
+
+.ptcg-type-M {
+    background: #AAAAAA;
+    background: radial-gradient(ellipse at 75% 25%, #ffffff 0%,#CCCCCC 15%,#666666 50%,#1C1C1A 100%);
+}
