@@ -16,6 +16,30 @@
     <style>
       body {
         padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+        padding-bottom: 60px;
+      }
+      dl, dd, dt {
+        margin-top: 0px;
+        margin-bottom: 0px;
+      }
+      body .row-fluid [class*="span"] {
+        min-height: 0px;
+      }
+      .mechanic-type, .mechanic-name, dt {
+        font-weight: bold;
+      }
+      @media (min-width: 767px) {
+        .mechanic-type, dt {
+            text-align: right;
+        }
+        .mechanic-name {
+            text-align: center;
+        }
+      }
+      @media (max-width: 767px) {
+        dt {
+          margin-top: 5px
+        }
       }
     </style>
     <link href="../assets/css/bootstrap-responsive.css" rel="stylesheet">
@@ -51,8 +75,9 @@
 
     ${next.body()}
 
-    <script src="../assets/js/jquery.js"></script>
+    <script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
     <script src="../assets/js/bootstrap.js"></script>
+    <script type="text/javascript">$(".ptcg-type").tooltip()</script>
 
   </body>
 </html>

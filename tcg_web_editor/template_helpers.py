@@ -22,3 +22,21 @@ def nav_tabs(this, paths):
             text=obj.short_name,
         ))
     return Markup().join(result)
+
+
+def card_named_mechanic_note(card):
+    named_mechanics = [m.name for m in card.mechanics if m.name]
+    if named_mechanics:
+        return '({})'.format(', '.join(named_mechanics))
+    else:
+        return ''
+
+def type_icon(type):
+    return Markup(
+        '<span class="ptcg-type ptcg-type-{type.initial}" title="{type.name}">[{type.initial}]</span>'
+        ).format(type=type)
+
+def class_icon(cls):
+    return Markup(
+        '<span class="ptcg-cardclass" title="{cls.name}">{cls.name[0]}</span>'
+        ).format(cls=cls)

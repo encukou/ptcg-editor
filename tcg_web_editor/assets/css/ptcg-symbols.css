@@ -5,16 +5,35 @@
   src: url("/assets/fonts/ptcg-symbols.woff") format('woff');
 }
 
-.ptcg-type {
+.ptcg-type,
+.ptcg-cardclass {
     display: inline-block;
     height: 1em;
     width: 1em;
+    margin-right: 0.2ex;
+    cursor: default;
+}
+
+.ptcg-type {
     border-radius: 1em;
     border: 0.4pt solid black;
     font-family: 'PTCG Symbols';
     text-transform: lowercase;
-    margin-right: 0.2ex;
     color: black;
+    text-align: left;
+    font-weight: normal;
+    cursor: default;
+}
+
+.ptcg-cardclass {
+    text-align: center;
+    font-weight: bold;
+}
+
+.ptcg-type-null {
+    background: #444444;
+    background: radial-gradient(ellipse at 50% 50%, #888888 25%,#ffffff 100%);
+    border-style: none;
 }
 
 .ptcg-type-C {
@@ -60,4 +79,11 @@
 .ptcg-type-M {
     background: #AAAAAA;
     background: radial-gradient(ellipse at 75% 25%, #ffffff 0%,#CCCCCC 15%,#666666 50%,#1C1C1A 100%);
+}
+
+.muted.ptcg-type,
+.muted .ptcg-type {
+    border-color: rgb(153, 153, 153);
+    color: rgb(153, 153, 153);
+    background: transparent;
 }
