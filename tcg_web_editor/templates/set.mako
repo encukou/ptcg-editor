@@ -22,7 +22,7 @@
         <tr>
             <td>${print_.set_number}</td>
             <td>
-                <a href="${this.root['prints'].wrap(print_).url}">
+                <a href="${wrap(print_).url}">
                     <span class="muted">
                     % if print_.card.class_.identifier == 'pokemon':
                         % for t in print_.card.types:

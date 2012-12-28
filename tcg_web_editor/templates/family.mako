@@ -35,13 +35,13 @@ prints.sort(key=print_sort_key)
     %>
     <tr>
         <td>
-            <a href="${this.root['sets'].wrap(print_.set).url}">
+            <a href="${wrap(print_.set).url}">
                 ${print_.set.name}
             </a>
         </td>
         <td>${print_.set_number}</td>
         <td class="warning">
-            <a href="${this.root['prints'].wrap(print_).url}">
+            <a href="${wrap(print_).url}">
                 <span class="muted">
                 % if print_.card.class_.identifier == 'pokemon':
                     % for t in print_.card.types:

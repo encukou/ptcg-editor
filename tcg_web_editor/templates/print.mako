@@ -125,7 +125,7 @@ flavor = print_.pokemon_flavor
         <dl class="row-fluid">
             <dt class="span2">Set</dt>
             <dd class="span4">
-                <a href="${this.root['sets'].wrap(print_.set).url}">
+                <a href="${wrap(print_.set).url}">
                     ${print_.set.name}
                 </a>
             </dd>
@@ -137,7 +137,7 @@ flavor = print_.pokemon_flavor
                 <dt class="span2">Also printed as</dt>
                 <dd class="span10">
                 % for other_print in [p for p in card.prints if p is not print_]:
-                    <a href="${this.root['prints'].wrap(other_print).url}">
+                    <a href="${wrap(other_print).url}">
                         ${other_print.set.name} #${other_print.set_number}
                     </a>
                     % if not loop.last:
@@ -161,7 +161,7 @@ flavor = print_.pokemon_flavor
                             % if other_card is card:
                                 ${other_print.set.name} #${other_print.set_number}
                             % else:
-                            <a href="${this.root['prints'].wrap(other_print).url}">
+                            <a href="${wrap(other_print).url}">
                                 ${other_print.set.name} #${other_print.set_number}
                             </a>
                             % endif
@@ -176,7 +176,7 @@ flavor = print_.pokemon_flavor
 
             <p>
                 See the
-                <a href="${this.root['families'].wrap(card.family).url}">${card.name} card family</a>
+                <a href="${wrap(card.family).url}">${card.name} card family</a>
                 for more details.
             </p>
         % endif

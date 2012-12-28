@@ -97,6 +97,7 @@ class TemplateResource(Resource):
     def render_response(self, template_name=None, **kwargs):
         kwargs.setdefault('this', self)
         kwargs.setdefault('h', helpers)
+        kwargs.setdefault('wrap', self.root.wrap)
         kwargs.setdefault('request', self.request)
         if template_name is None:
             template_name = self.template_name
@@ -258,6 +259,17 @@ class Root(TemplateResource):
         return self.render_response(
             sets=self.request.db.query(tcg_tables.Set).all(),
         )
+
+    def wrap(self, obj):
+        if isinstance(obj, tcg_tables.Set):
+            return self['sets'].wrap(obj)
+        elif isinstance(obj, tcg_tables.Print):
+            return self['prints'].wrap(obj)
+        elif isinstance(obj, tcg_tables.CardFamily):
+            return self['families'].wrap(obj)
+        else:
+            raise TypeError("Don't know how to wrap a {}".format(
+                type(obj).__name__))
 
     child_sets = Sets
     child_prints = Prints
