@@ -10,6 +10,7 @@ from pyramid.traversal import find_interface, resource_path, traverse
 from pyramid.decorator import reify
 from pyramid.location import lineage
 from sqlalchemy import func
+from sqlalchemy.orm.exc import NoResultFound
 
 from pokedex.db import util as dbutil
 from ptcgdex import tcg_tables
@@ -167,6 +168,23 @@ class Print(TemplateResource):
     @reify
     def friendly_name(self):
         return self.print_.card.name
+
+    def __call__(self):
+        query = self.request.db.query(tcg_tables.Print)
+        query = query.filter(tcg_tables.Print.set == self.print_.set)
+
+        def prev_next(offset):
+            num = self.print_.order + offset
+            q = query.filter(tcg_tables.Print.order == num)
+            try:
+                return q.one()
+            except NoResultFound:
+                return None
+
+        return self.render_response(
+            prev_print=prev_next(-1),
+            next_print=prev_next(+1),
+        )
 
 
 class Families(TemplateResource):

@@ -8,10 +8,11 @@ flavor = print_.pokemon_flavor
 %>
 
 <div class="container">
-    <h1>${print_.card.name} <span class='muted'>(${print_.set.name})</span></h1>
+    <h1>${print_.card.name} <small>${print_.set.name} #${print_.set_number}</small></h1>
 </div>
 
 <div class="container">
+
 <div class="row-fluid">
     <div class="span10">
 
@@ -48,7 +49,6 @@ flavor = print_.pokemon_flavor
         </dl>
         % endif
 
-        % if card.damage_modifiers:
         % for mod in card.damage_modifiers:
         <dl class="row-fluid">
             % if mod.operation in '-':
@@ -61,7 +61,39 @@ flavor = print_.pokemon_flavor
             </dd>
         </dl>
         % endfor
-        % endif
+
+        % for evo in card.evolutions:
+        <dl class="row-fluid">
+            <dt class="span2">
+            % if evo.family_to_card:
+                Evolves from
+            % else:
+                Evolves to
+            % endif
+            </dt>
+            <dd class="span10">
+                <a href="${wrap(evo.family).url}">${evo.family.name}</a>
+            </dd>
+        </dl>
+        % endfor
+        % for evo in card.family.evolutions:
+        <dl class="row-fluid">
+            <dt class="span2 muted">
+            % if evo.family_to_card:
+                Evolves into
+            % else:
+                Evolves from
+            % endif
+            </dt>
+            <dd class="span10">
+                <a href="${wrap(evo.card.prints[0]).url}">
+                    ${evo.card.name}
+                    <span class="muted">(${', '.join('{} #{}'.format(
+                        p.set.name, p.set_number) for p in evo.card.prints)})</span>
+                </a>
+            </dd>
+        </dl>
+        % endfor
 
         % if card.mechanics:
         % for mechanic in card.mechanics:
@@ -88,8 +120,8 @@ flavor = print_.pokemon_flavor
                 <dt class="span2">Pokémon</dt>
                 <dd class="span4">
                     <a href="http://veekun.com/dex/pokemon/${flavor.species.name.lower()}">
-                        ${flavor.species.name}
-                    </a>
+                    ${flavor.species.name}
+                    </a><sup>[↗]</sup>
                 </dd>
                 <dt class="span2">Species</dt>
                 <dd class="span4">${flavor.genus}</dd>
@@ -130,7 +162,8 @@ flavor = print_.pokemon_flavor
                 </a>
             </dd>
             <dt class="span2">Number</dt>
-            <dd class="span4">${print_.set_number}</dd>
+            <dd class="span4">${print_.set_number}${
+                '/{}'.format(print_.set.total) if print_.set.total else ''}</dd>
         </dl>
         % if len(card.prints) > 1:
             <dl class="row-fluid">
@@ -190,11 +223,26 @@ flavor = print_.pokemon_flavor
     % endif
     </div>
 </div>
+
+<ul class="pager">
+    % if prev_print:
+    <li class="previous">
+        <a href="${wrap(prev_print).url}">← ${prev_print.card.name}</a>
+    </li>
+    % endif
+    <li>
+        <a href="${wrap(print_.set).url}">${print_.set.name}</a>
+    </li>
+    % if next_print:
+    <li class="next">
+        <a href="${wrap(next_print).url}">${next_print.card.name} →</a>
+    </li>
+    % endif
+</ul>
+
 </div>
 
 <% ''' TODO:
-order: 0
-evolves from: Flaaffy
 legal: false
 '''
 %>

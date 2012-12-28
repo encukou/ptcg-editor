@@ -15,7 +15,7 @@ def active(page):
 
     <h1>Card Families</h1>
 
-    <div class="pagination">
+    <div class="pagination pagination-small pagination-centered">
         <ul>
             <li ${active(this.base_families)}><a href="${this.base_families.url}">@</a></li>
             % for s in string.ascii_lowercase:
@@ -28,7 +28,8 @@ def active(page):
         <%
         num_prints = len([p for c in family.cards for p in c.prints])
         %>
-        <div class="container">
+        <div class="row-fluid">
+        <span class="span10 offset2">
             <a href="${this.wrap(family).url}">
                 ${family.name}
                 % if num_prints != 1:
@@ -42,6 +43,7 @@ def active(page):
                     <span class="muted">(${', '.join(info)})</span>
                 % endif
             </a>
+        </span>
         </div>
     % endfor
 

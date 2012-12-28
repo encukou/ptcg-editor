@@ -19,7 +19,7 @@ prints.sort(key=print_sort_key)
             <th>Set name</th>
             <th>No.</th>
             <th>Card</th>
-            <th colspan="2">Reprints</th>
+            <th colspan="2">Exact Reprints</th>
         </tr>
     </thead>
     <tbody>
