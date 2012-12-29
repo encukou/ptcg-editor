@@ -65,7 +65,7 @@
           ${link(this.root, class_="brand", text="Card DB Editor")}
           <div class="nav-collapse collapse">
             <ul class="nav">
-              ${h.nav_tabs(this, ('/', '/sets', '/cards'))}
+              ${h.nav_tabs(this, ('/sets', '/cards'))}
             </ul>
           </div>
         </div>
