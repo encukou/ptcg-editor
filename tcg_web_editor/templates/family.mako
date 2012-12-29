@@ -1,14 +1,16 @@
 <%inherit file="base.mako" />
-<%
+<%!
 import string
 
 def print_sort_key(p):
     return p.set.id, p.set_number
+%>
 
+<%
 prints = [p for c in this.family.cards for p in c.prints]
 prints.sort(key=print_sort_key)
-
 %>
+
 <div class="container">
 
     <h1>Cards named ${this.family.name}</h1>
@@ -34,11 +36,7 @@ prints.sort(key=print_sort_key)
         mechanic_note = h.card_named_mechanic_note(print_.card)
     %>
     <tr>
-        <td>
-            <a href="${wrap(print_.set).url}">
-                ${print_.set.name}
-            </a>
-        </td>
+        <td>${link(print_.set)}</td>
         <td>${print_.set_number}</td>
         <td class="warning">
             <a href="${wrap(print_).url}">

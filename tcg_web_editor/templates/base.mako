@@ -60,7 +60,7 @@
     <div class="navbar navbar-inverse navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
-          <a class="brand" href="${this.root.url}">TCG DB Editor</a>
+          ${link(this.root, class_="brand", text="Card DB Editor")}
           <div class="nav-collapse collapse">
             <ul class="nav">
               ${h.nav_tabs(this, ('/', '/sets', '/cards'))}
@@ -72,7 +72,7 @@
 
     <ul class="breadcrumb">
         % for obj in reversed(this.lineage[1:]):
-            <li><a href="${obj.url}">${obj.short_name}</a> <span class="divider">/</span></li>
+            <li>${link(obj, text=obj.short_name)} <span class="divider">/</span></li>
         % endfor
         <li class="active">${this.short_name}</li>
     </ul>

@@ -1,9 +1,11 @@
 <%inherit file="base.mako" />
-<%
+<%!
 import json
 
 from markupsafe import Markup
+%>
 
+<%
 print_ = this.print_
 card = print_.card
 flavor = print_.pokemon_flavor
@@ -83,7 +85,7 @@ flavor = print_.pokemon_flavor
             % endif
             </dt>
             <dd class="span10">
-                <a href="${wrap(evo.family).url}">${evo.family.name}</a>
+                ${link(evo.family, text=evo.family.name)}</a>
             </dd>
         </dl>
         % endfor
@@ -161,17 +163,13 @@ flavor = print_.pokemon_flavor
         </dl>
         <dl class="row-fluid">
             <dt class="span2">Illustrator</dt>
-            <dd class="span10"><a href="${wrap(print_.illustrator).url}">${print_.illustrator.name}</a></dd>
+            <dd class="span10">${link(print_.illustrator)}</a></dd>
         </dl>
 
         <h2>Sets &amp; Reprints</h2>
         <dl class="row-fluid">
             <dt class="span2">Set</dt>
-            <dd class="span4">
-                <a href="${wrap(print_.set).url}">
-                    ${print_.set.name}
-                </a>
-            </dd>
+            <dd class="span4">${link(print_.set)}</dd>
             <dt class="span2">Number</dt>
             <dd class="span4">${print_.set_number}${
                 '/{}'.format(print_.set.total) if print_.set.total else ''}</dd>

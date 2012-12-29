@@ -21,8 +21,8 @@
 
         <p>
             Currently, we have
-            <a href="${this['sets'].url}">${set_query.count()} sets</a> with
-            <a href="${this['cards'].url}">${card_query.count()} cards</span></a>.
+            ${link('sets', text='{} sets'.format(set_query.count()))} with
+            ${link('cards', text='{} cards'.format(card_query.count()))}</span>.
         </p>
 
     </div>

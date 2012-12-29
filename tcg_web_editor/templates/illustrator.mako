@@ -1,5 +1,5 @@
 <%inherit file="base.mako" />
-<%
+<%!
 from ptcgdex import tcg_tables
 %>
 
@@ -18,7 +18,7 @@ from ptcgdex import tcg_tables
     <tbody>
     % for print_ in this.illustrator.prints:
         <tr>
-            <td><a href="${wrap(print_.set)}">${print_.set.name}</a></td>
+            <td>${link(print_.set)}</a></td>
             <td>${print_.set_number}</td>
             <td>
                 <a href="${wrap(print_).url}">

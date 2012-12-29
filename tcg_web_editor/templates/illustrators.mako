@@ -1,5 +1,5 @@
 <%inherit file="base.mako" />
-<%
+<%!
 from ptcgdex import tcg_tables
 %>
 
@@ -24,7 +24,7 @@ from ptcgdex import tcg_tables
                 %>
                 ${query.count()}
             </td>
-            <td><a href="${this.wrap(illustrator).url}">${illustrator.name}</a></td>
+            <td>${link(illustrator)}</td>
         </tr>
     % endfor
     </tbody>

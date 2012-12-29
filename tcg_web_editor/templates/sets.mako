@@ -17,7 +17,7 @@
     % for tcg_set in this.sets:
         <tr>
             <td>${tcg_set.total or u'—'}</td>
-            <td><a href="${this.wrap(tcg_set).url}">${tcg_set.name}</a></td>
+            <td>${link(tcg_set)}</td>
             <td>${tcg_set.release_date or u'—'}</td>
             <td>${tcg_set.ban_date or u'—'}</td>
         </tr>

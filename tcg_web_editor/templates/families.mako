@@ -1,9 +1,11 @@
 <%inherit file="base.mako" />
-<%
+<%!
 import string
 
 from markupsafe import Markup
+%>
 
+<%
 def active(page):
     if page is this:
         return Markup('class="active"')
@@ -17,9 +19,9 @@ def active(page):
 
     <div class="pagination pagination-small pagination-centered">
         <ul>
-            <li ${active(this.base_families)}><a href="${this.base_families.url}">@</a></li>
+            <li ${active(this.base_families)}>${link(this.base_families, text="@")}</li>
             % for s in string.ascii_lowercase:
-                <li ${active(this[s])}><a href="${this[s].url}">${s.upper()}</a></li>
+                <li ${active(this[s])}>${link(this[s], text=s.upper())}</a></li>
             % endfor
         </ul>
     </div>

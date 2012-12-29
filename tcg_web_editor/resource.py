@@ -102,6 +102,7 @@ class TemplateResource(Resource):
         kwargs.setdefault('this', self)
         kwargs.setdefault('h', helpers)
         kwargs.setdefault('wrap', self.root.wrap)
+        kwargs.setdefault('link', helpers.link(self))
         kwargs.setdefault('request', self.request)
         kwargs.setdefault('asset_url', helpers.asset_url_factory(self.request))
         if template_name is None:

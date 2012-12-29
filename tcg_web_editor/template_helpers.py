@@ -1,5 +1,9 @@
-from markupsafe import Markup
+# Encoding: UTF-8
 
+from __future__ import unicode_literals
+
+from markupsafe import Markup
+import functools
 
 def _best_parent(this, objs):
     best = None
@@ -45,3 +49,28 @@ def asset_url_factory(request):
     def asset_url(url):
         return request.static_url('tcg_web_editor:assets/{}'.format(url))
     return asset_url
+
+class Link(object):
+    def __init__(self, context, obj, text=None, class_=None, **attrs):
+        from tcg_web_editor.resource import Resource
+        if isinstance(obj, basestring):
+            obj = context.traverse(obj)
+        elif not isinstance(obj, Resource):
+            obj = context.root.wrap(obj)
+        self.text = text
+        self.obj = obj
+        self.attrs = attrs
+        self.attrs.setdefault('href', obj.url)
+        if class_ is not None:
+            self.attrs.setdefault('class', class_)
+
+    def __html__(self):
+        text = self.text or self.obj.friendly_name
+        url = self.obj.url
+        attrs = ' '.join(Markup('{}="{}"').format(name, value) for name, value
+            in self.attrs.items())
+        return Markup('<a {}>{}</a>'.format(attrs, text))
+    __unicode__ = __html__
+
+def link(context):
+    return functools.partial(Link, context)
