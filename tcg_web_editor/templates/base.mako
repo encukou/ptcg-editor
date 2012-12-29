@@ -53,6 +53,8 @@
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
+    <link rel="apple-touch-icon-precomposed" href="${asset_url('img/staryu-precomposed.png')}">
+    <link rel="shortcut icon" href="${asset_url('img/staryu-32.png')}">
   </head>
 
   <body>
