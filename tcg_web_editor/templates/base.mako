@@ -13,6 +13,7 @@
 
     <link href="../assets/css/bootstrap.css" rel="stylesheet">
     <link href="../assets/css/ptcg-symbols.css" rel="stylesheet">
+    <link href="../assets/css/prettify.css" type="text/css" rel="stylesheet" />
     <style>
       body {
         padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
@@ -75,10 +76,12 @@
 
     ${next.body()}
 
-    <script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
-    <script src="../assets/js/bootstrap.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+    <script type="text/javascript" src="../assets/js/bootstrap.js"></script>
+    <script type="text/javascript" src="../assets/js/prettify.js"></script>
     <script type="text/javascript">$(".ptcg-type").tooltip()</script>
     <script type="text/javascript">$(".tooltipped").tooltip()</script>
+    <script type="text/javascript">$(prettyPrint)</script>
 
   </body>
 </html>

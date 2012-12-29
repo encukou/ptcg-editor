@@ -1,0 +1,32 @@
+/* http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.css */
+
+.com { color: #707173; } /* comment - gray */
+.lit, .dec { color: #008C48; } /* literal, decimal - green */
+.pun, .opn, .clo { color: #A21D21; } /* punct, open, close - brown */
+.fun { color: #662C91; } /* function - purple */
+.str, .atv { color: #185AA9; } /* string - blue */
+.kwd, .prettyprint .tag { color: #0D0E0E; } /* keyword - black */
+.typ, .atn, .var { color: #F47D23; } /* type, attr, variable - orange */
+.pln { color: #48484c; } /* plaintext */
+
+.prettyprint {
+  padding: 8px;
+  background-color: #f7f7f9;
+  border: 1px solid #e1e1e8;
+}
+.prettyprint.linenums {
+  -webkit-box-shadow: inset 40px 0 0 #fbfbfc, inset 41px 0 0 #ececf0;
+     -moz-box-shadow: inset 40px 0 0 #fbfbfc, inset 41px 0 0 #ececf0;
+          box-shadow: inset 40px 0 0 #fbfbfc, inset 41px 0 0 #ececf0;
+}
+
+/* Specify class=linenums on a pre to get line numbering */
+ol.linenums {
+  margin: 0 0 0 33px; /* IE indents via margin-left */
+}
+ol.linenums li {
+  padding-left: 12px;
+  color: #bebec5;
+  line-height: 20px;
+  text-shadow: 0 1px 0 #fff;
+}

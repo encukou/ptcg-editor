@@ -1,6 +1,10 @@
 <%inherit file="base.mako" />
 <%
+import json
+
 from markupsafe import Markup
+
+from ptcgdex import load
 
 print_ = this.print_
 card = print_.card
@@ -9,7 +13,16 @@ flavor = print_.pokemon_flavor
 
 <div class="container">
     <h1>${print_.card.name} <small>${print_.set.name} #${print_.set_number}</small></h1>
+
+    <ul class="nav nav-tabs">
+    <li class="active"><a href="#edittabs-view" data-toggle="tab">View</a></li>
+    <li><a href="#edittabs-json" data-toggle="tab">Data</a></li>
+    </ul>
+
 </div>
+
+<div class="tab-content">
+<div class="tab-pane active" id="edittabs-view">
 
 <div class="container">
 
@@ -224,22 +237,36 @@ flavor = print_.pokemon_flavor
     </div>
 </div>
 
-<ul class="pager">
-    % if prev_print:
-    <li class="previous">
-        <a href="${wrap(prev_print).url}">← ${prev_print.card.name}</a>
-    </li>
-    % endif
-    <li>
-        <a href="${wrap(print_.set).url}">${print_.set.name}</a>
-    </li>
-    % if next_print:
-    <li class="next">
-        <a href="${wrap(next_print).url}">${next_print.card.name} →</a>
-    </li>
-    % endif
-</ul>
+</div>
+</div>
+<div class="tab-pane" id="edittabs-json">
+<div class="container">
 
+<h2>JSON Data</h2>
+<pre class="prettyprint linenums">
+${json.dumps(load.export_print(print_), sort_keys=True, indent=4)}
+</pre>
+
+</div>
+</div>
+</div>
+
+<div class="container">
+    <ul class="pager">
+        % if prev_print:
+        <li class="previous">
+            <a href="${wrap(prev_print).url}">← ${prev_print.card.name}</a>
+        </li>
+        % endif
+        <li>
+            <a href="${wrap(print_.set).url}">${print_.set.name}</a>
+        </li>
+        % if next_print:
+        <li class="next">
+            <a href="${wrap(next_print).url}">${next_print.card.name} →</a>
+        </li>
+        % endif
+    </ul>
 </div>
 
 <% ''' TODO:

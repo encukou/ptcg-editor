@@ -88,11 +88,13 @@
     background: transparent;
 }
 
-.label-A { background-color: #B8D2EC; }
-.label-B { background-color: #D9E4AA; }
-.label-C { background-color: #EBC0DA; }
-.label-D { background-color: #F3D1B0; }
-.label-E { background-color: #D5B2D4; }
-.label-F { background-color: #F2AFAD; }
-.label-G { background-color: #DDB9A9; }
-.label-H { background-color: #CDCDCD; }
+                          /* subdued       name dark   lighter */
+.label-A { background-color: #B8D2EC; } /* blue 185AA9 5A9BD4  */
+.label-B { background-color: #D9E4AA; } /* gree 008C48 7AC36A  */
+.label-C { background-color: #EBC0DA; } /* pink B43894 D77FB4  */
+.label-D { background-color: #F3D1B0; } /* oran F47D23 FAA75B  */
+.label-E { background-color: #D5B2D4; } /* purp 662C91 9E67AB  */
+.label-F { background-color: #F2AFAD; } /* red  EE2E2F F15A60  */
+.label-G { background-color: #DDB9A9; } /* brow A21D21 CE7058  */
+.label-H { background-color: #CDCDCD; } /* gray 0D0E0E 707173  */
+EBC0DA
