@@ -29,7 +29,7 @@ flavor = print_.pokemon_flavor
 <div class="row-fluid">
     <div class="span10">
 
-        <h2>Card info</h2>
+        <h2>Card Info</h2>
 
         <dl class="row-fluid">
             <dt class="span2">Name</dt>

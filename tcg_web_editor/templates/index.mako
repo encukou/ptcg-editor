@@ -2,8 +2,50 @@
 
 <div class="container">
 
-    <h1>Pokébeach Card Database Editor</h1>
+    <div class="hero-unit">
 
-    <p>Currently, the <a href="${this['sets'].url}">set list</a> has ${len(sets)} sets.</p>
+        <h1>PokéBeach Card Database Editor</h1>
+
+        <br>
+
+        <p>
+            Here, you can view
+                <span class="tooltipped" style="cursor:default;"
+                        title="or suggest edits, if you're not an admin">
+                    and edit*
+                </span>
+            our database of Pokémon Trading Cards.
+        </p>
+
+        <br>
+
+        <p>
+            Currently, we have
+            <a href="${this['sets'].url}">${set_query.count()} sets</a> with
+            <a href="${this['cards'].url}">${card_query.count()} cards</span></a>.
+        </p>
+
+    </div>
+
+
+    <p>
+        This site is <a href="https://github.com/encukou/ptcgdex/tree/editor">open-source</a>,
+        the data is <a href="https://github.com/encukou/ptcgdex/tree/master/ptcgdex/data">also available</a>.
+        Run your own!
+        <br>
+        Documentation is sorely lacking; e-mail
+        <a href="mailto:encukou@gmail.com">En-Cu-Kou</a> or try
+        <a href="irc://irc.veekun.com/veekun">veekun IRC</a> if you have any questions.
+        <br>
+        Built using
+            <a href="http://veekun.com">veekun pokédex</a>,
+            <a href="http://www.python.org/">Python</a>,
+            <a href="http://www.sqlalchemy.org/">SQLAlchemy</a>,
+            <a href="http://www.pylonsproject.org/">Pyramid</a>,
+            <a href="http://www.makotemplates.org/">Mako</a>,
+            <a href="http://jquery.com/">JQuery</a>,
+            and <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a> for
+            <a href="http://pokebeach.com/">PokéBeach</a>.
+    <p>
 
 </div>

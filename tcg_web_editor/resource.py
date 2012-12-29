@@ -281,7 +281,7 @@ class Family(TemplateResource):
 
 class Root(TemplateResource):
     template_name = 'index.mako'
-    friendly_name = u'Pokébeach Card Database Editor'
+    friendly_name = u'PokéBeach Card Database Editor'
     short_name = 'Home'
 
     @classmethod
@@ -290,7 +290,8 @@ class Root(TemplateResource):
 
     def __call__(self):
         return self.render_response(
-            sets=self.request.db.query(tcg_tables.Set).all(),
+            set_query=self.request.db.query(tcg_tables.Set),
+            card_query=self.request.db.query(tcg_tables.Card),
         )
 
     def wrap(self, obj):
