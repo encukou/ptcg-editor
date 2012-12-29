@@ -48,6 +48,7 @@ def active(page):
     % endfor
 
     % if this is this.base_families:
+    <br>
     <div class="container">
         <p class="alert alert-info">
             Use the pagination above to list cards by name.

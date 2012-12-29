@@ -3,6 +3,8 @@
 from __future__ import unicode_literals
 
 import string
+import json
+import yaml
 
 from pyramid.response import Response
 from pyramid.renderers import render
@@ -13,7 +15,7 @@ from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
 from pokedex.db import util as dbutil
-from ptcgdex import tcg_tables
+from ptcgdex import tcg_tables, load
 
 from tcg_web_editor import template_helpers as helpers
 
@@ -109,6 +111,25 @@ class TemplateResource(Resource):
         return self.render_response()
 
 
+class JSONExport(Resource):
+    """JSON export resource
+
+    Implement __json__() in a Resource and put this class in its child_json
+    attribute, that's all there is to it!
+    """
+    def __call__(self):
+        return Response(
+            json.dumps(self.parent.__json__()),
+            content_type=b'application/json')
+
+
+class YAMLExport(Resource):
+    def __call__(self):
+        return Response(
+            load.yaml_dump(self.parent.__json__()),
+            content_type=b'application/x-yaml')
+
+
 class Sets(TemplateResource):
     template_name = 'sets.mako'
     friendly_name = 'Sets'
@@ -142,6 +163,8 @@ class Set(TemplateResource):
 
 class Print(TemplateResource):
     template_name = 'print.mako'
+    child_json = JSONExport
+    child_yaml = YAMLExport
 
     def __init__(self, parent, print_):
         self.print_ = print_
@@ -178,6 +201,9 @@ class Print(TemplateResource):
             prev_print=prev_next(-1),
             next_print=prev_next(+1),
         )
+
+    def __json__(self):
+        return load.export_print(self.print_)
 
 
 class Families(TemplateResource):
@@ -232,7 +258,7 @@ class Families(TemplateResource):
     @reify
     def short_name(self):
         if self.first_letter:
-            return self.first_letter.upper()
+            return self.first_letter.upper() + "⁓"
         else:
             return 'Cards'
 

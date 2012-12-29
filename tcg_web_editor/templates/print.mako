@@ -4,8 +4,6 @@ import json
 
 from markupsafe import Markup
 
-from ptcgdex import load
-
 print_ = this.print_
 card = print_.card
 flavor = print_.pokemon_flavor
@@ -244,8 +242,15 @@ flavor = print_.pokemon_flavor
 
 <h2>JSON Data</h2>
 <pre class="prettyprint linenums">
-${json.dumps(load.export_print(print_), sort_keys=True, indent=4)}
+${json.dumps(this.__json__(), sort_keys=True, ensure_ascii=False, indent=4)}
 </pre>
+<div class="container">
+    We also serve raw
+    <a href="${this['json'].url}">JSON</a> and
+    savory <a href="${this['yaml'].url}">YAML</a>
+    to our dear data gastronomists.
+    Do however note that the schema is not yet set in stone.
+</div>
 
 </div>
 </div>
