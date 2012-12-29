@@ -1,11 +1,11 @@
 from wsgiref.simple_server import make_server
 from pyramid.config import Configurator
 from pyramid.request import Request
-from pyramid.response import Response
 
 from pokedex.db import connect
 
-from tcg_web_editor.resource import Resource, Root
+from tcg_web_editor.resource import Resource
+from tcg_web_editor.resource.tcgdex import Root
 
 def view(context, request):
     return context()
@@ -18,7 +18,7 @@ def make_app(global_config, **settings):
         db = connect()
 
     config = Configurator(
-        root_factory=Root.factory,
+        root_factory=Root.root_factory,
         request_factory=SQLARequest,
         settings=settings,
     )
