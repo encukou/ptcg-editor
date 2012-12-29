@@ -161,7 +161,7 @@ flavor = print_.pokemon_flavor
         </dl>
         <dl class="row-fluid">
             <dt class="span2">Illustrator</dt>
-            <dd class="span10">${print_.illustrator.name}</dd>
+            <dd class="span10"><a href="${wrap(print_.illustrator).url}">${print_.illustrator.name}</a></dd>
         </dl>
 
         <h2>Sets &amp; Reprints</h2>
@@ -193,7 +193,7 @@ flavor = print_.pokemon_flavor
         % endif
 
         % if len(card.family.cards) > 1:
-            <h2>All ${card.name} cards</h2>
+            <h2>Other ${card.name} cards</h2>
             <div class="row-fluid">
                 <div class="well">
                 % for other_card in card.family.cards:

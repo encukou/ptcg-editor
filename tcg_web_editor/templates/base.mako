@@ -81,7 +81,7 @@
 
     <hr style="margin-top: 50px;">
 
-    <footer class="container">
+    <footer class="muted container">
         <a href="http://www.pokemon.com">Pokémon</a> and the
             <a href="http://www.pokemontcg.com">Pokémon Trading Card Game</a>
             are ©1995-2013 Nintendo, Creatures, Game Freak and/or Wizards of the Coast.
