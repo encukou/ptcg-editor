@@ -100,6 +100,7 @@ class TemplateResource(Resource):
         kwargs.setdefault('h', helpers)
         kwargs.setdefault('wrap', self.root.wrap)
         kwargs.setdefault('request', self.request)
+        kwargs.setdefault('asset_url', helpers.asset_url_factory(self.request))
         if template_name is None:
             template_name = self.template_name
         return Response(render(template_name, kwargs, self.request))
@@ -139,21 +140,6 @@ class Set(TemplateResource):
         return self.set.name
 
 
-class Prints(TemplateResource):
-    template_name = 'prints.mako'
-    friendly_name = 'Card Prints'
-    short_name = 'Prints'
-
-    def init(self):
-        self.print_query = self.request.db.query(tcg_tables.Print)
-
-    def get(self, print_id):
-        return self.wrap(self.print_query.get(print_id))
-
-    def wrap(self, print_):
-        return Print(self, print_)
-
-
 class Print(TemplateResource):
     template_name = 'print.mako'
 
@@ -163,11 +149,18 @@ class Print(TemplateResource):
 
     @reify
     def name(self):
-        return self.print_.id
+        return '{}~{}'.format(
+            self.print_.set.identifier,
+            self.print_.set_number.lower(),
+        )
 
     @reify
     def friendly_name(self):
-        return self.print_.card.name
+        return '{} ({})'.format(self.print_.card.name, self.short_name)
+
+    @reify
+    def short_name(self):
+        return '{} #{}'.format(self.print_.set.name, self.print_.set_number)
 
     def __call__(self):
         query = self.request.db.query(tcg_tables.Print)
@@ -232,16 +225,16 @@ class Families(TemplateResource):
     @reify
     def friendly_name(self):
         if self.first_letter:
-            return 'Card Families ({})'.format(self.first_letter.upper())
+            return 'Card list ({})'.format(self.first_letter.upper())
         else:
-            return 'Card Families'
+            return 'Card list'
 
     @reify
     def short_name(self):
         if self.first_letter:
             return self.first_letter.upper()
         else:
-            return 'Card Families'
+            return 'Cards'
 
 
 class Family(TemplateResource):
@@ -263,6 +256,28 @@ class Family(TemplateResource):
     def short_name(self):
         return self.family.name
 
+    def get(self, set_and_number):
+        try:
+            set_identifier, number = set_and_number.split('~')
+        except ValueError:
+            raise LookupError('Must include a ~ character')
+        query = self.request.db.query(tcg_tables.Print)
+        query = query.join(tcg_tables.Print.set)
+        query = query.join(tcg_tables.Print.card)
+        query = query.filter(tcg_tables.Card.family == self.family)
+        query = query.filter(tcg_tables.Set.identifier == set_identifier)
+        query = query.filter(func.lower(tcg_tables.Print.set_number) == number)
+        try:
+            print_ = query[0]
+        except NoResultFound:
+            raise LookupError('No such print')
+        return self.wrap(print_)
+
+    def wrap(self, print_):
+        if print_.card.family is not self.family:
+            return self.root.wrap(print_.card.family).wrap(print_)
+        return Print(self, print_)
+
 
 class Root(TemplateResource):
     template_name = 'index.mako'
@@ -282,13 +297,12 @@ class Root(TemplateResource):
         if isinstance(obj, tcg_tables.Set):
             return self['sets'].wrap(obj)
         elif isinstance(obj, tcg_tables.Print):
-            return self['prints'].wrap(obj)
+            return self.wrap(obj.card.family).wrap(obj)
         elif isinstance(obj, tcg_tables.CardFamily):
-            return self['families'].wrap(obj)
+            return self['cards'].wrap(obj)
         else:
             raise TypeError("Don't know how to wrap a {}".format(
                 type(obj).__name__))
 
     child_sets = Sets
-    child_prints = Prints
-    child_families = Families
+    child_cards = Families

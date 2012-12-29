@@ -40,3 +40,8 @@ def class_icon(cls):
     return Markup(
         '<span class="ptcg-cardclass" title="{cls.name}">{cls.name[0]}</span>'
         ).format(cls=cls)
+
+def asset_url_factory(request):
+    def asset_url(url):
+        return request.static_url('tcg_web_editor:assets/{}'.format(url))
+    return asset_url

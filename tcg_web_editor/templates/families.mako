@@ -13,7 +13,7 @@ def active(page):
 
 <div class="container">
 
-    <h1>Card Families</h1>
+    <h1>Card list</h1>
 
     <div class="pagination pagination-small pagination-centered">
         <ul>
@@ -50,7 +50,7 @@ def active(page):
     % if this is this.base_families:
     <div class="container">
         <p class="alert alert-info">
-            Use the pagination above to list cards.
+            Use the pagination above to list cards by name.
         </p>
     </div>
     % endif
