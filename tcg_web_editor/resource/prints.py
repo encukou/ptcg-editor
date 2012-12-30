@@ -195,19 +195,19 @@ class Diff(TemplateResource):
                     assert lines[0][i1:i2] == lines[1][j1:j2]
                     for i, j in zip(range(i1, i2), range(j1, j2)):
                         rows.append([
-                            {'num': i, 'text': lines[0][i]},
-                            {'num': j, 'text': None},
+                            {'num': i, 'text': lines[0][i], 'cls': 'same'},
+                            {'num': j, 'text': None, 'cls': ''},
                         ])
                 else:
                     for i in range(i1, i2):
                         rows.append([
-                            {'num': i, 'text': lines[0][i]},
-                            {'num': None, 'text': None},
+                            {'num': i, 'text': lines[0][i], 'cls': 'a different'},
+                            {'num': None, 'text': None, 'cls': ''},
                         ])
                     for j in range(j1, j2):
                         rows.append([
-                            {'num': None, 'text': lines[1][j]},
-                            {'num': j, 'text': None},
+                            {'num': None, 'text': lines[1][j], 'cls': 'b different'},
+                            {'num': j, 'text': None, 'cls': ''},
                         ])
         else:
             differ = difflib.SequenceMatcher(a=lines[0], b=lines[1])
@@ -219,9 +219,14 @@ class Diff(TemplateResource):
                         if n is None:
                             row[i]['num'] = None
                             row[i]['text'] = None
+                            row[i]['cls'] = 'empty'
                         else:
                             row[i]['num'] = n
                             row[i]['text'] = line[n]
+                            row[i]['cls'] = ' '.join([
+                                'ab'[i],
+                                'same' if tag == 'equal' else 'different',
+                            ])
                     rows.append(row)
         self.rows = rows
         return self.render_response()

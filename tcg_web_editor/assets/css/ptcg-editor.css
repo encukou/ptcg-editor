@@ -1,0 +1,108 @@
+/*****************************************************************************/
+/* General */
+
+body {
+    /* Space for navbar; beathing space below */
+    padding-top: 60px;
+    padding-bottom: 10px;
+}
+footer {
+    /* Make footer smaller */
+    font-size: smaller;
+}
+
+/*****************************************************************************/
+/* Card information */
+
+/* Tighter spacing for info */
+dl, dd, dt {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+body .row-fluid [class*="span"] {
+    min-height: 0px;
+}
+
+.mechanic-type, .mechanic-name, dt {
+    /* <dt>s and mechanic titles serve as headers */
+    font-weight: bold;
+}
+@media (min-width: 767px) {
+    /* Wide screen; align captions so they're closer to their data */
+    .mechanic-type, dt {
+        text-align: right;
+    }
+    .mechanic-name {
+        text-align: center;
+    }
+}
+@media (max-width: 767px) {
+    /* Small screen; separate info elements a bit vertically */
+    dt {
+        margin-top: 5px
+    }
+}
+
+/*****************************************************************************/
+/* Diffs */
+
+table.diff-table {
+    table-layout: fixed;
+    width: 100%;
+}
+table.diff-table thead td {
+    font-weight: normal;
+    width: 6ex;
+    font-size: small;
+}
+table.diff-table thead th {
+    font-weight: normal;
+    text-align: center;
+}
+table.diff-table.diff-table-uni thead th {
+    text-align: left;
+}
+table.diff-table.diff-table-uni thead td {
+    text-align: center;
+}
+table.diff-table tbody td {
+    background-color: rgb(245, 245, 245);
+}
+table.diff-table tbody tr:first-child td {
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.05) inset;
+    border-top: 1px solid rgb(227, 227, 227);
+}
+table.diff-table tbody tr:last-child td {
+    border-bottom: 1px solid rgb(227, 227, 227);
+}
+table.diff-table tbody td {
+    border-left: 1px solid rgb(227, 227, 227);
+    border-right: 1px solid rgb(227, 227, 227);
+}
+table.diff-table thead td,
+table.diff-table tbody th {
+    padding-right: 1ex;
+    font-weight: normal;
+    font-size: small;
+    font-family: monospace;
+    text-align: right;
+    color: #999;
+}
+table.diff-table tbody td {
+    white-space: pre;
+    font-family: monospace;
+    overflow: hidden;
+    width: 50%;
+}
+table.diff-table tbody td.empty {
+    background-color: white;
+}
+table.diff-table tbody td.different {
+    font-weight: bold;
+}
+table.diff-table td.a.different {
+    background-color: #FFD8D8;
+}
+table.diff-table td.b.different {
+    background-color: #E0FFE0;
+}

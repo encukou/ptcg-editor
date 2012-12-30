@@ -130,7 +130,7 @@ class JSONExport(Resource):
     """
     def __call__(self):
         return Response(
-            json.dumps(self.parent.__json__()),
+            json.dumps(self.parent.__json__(), separators=(',', ':')),
             content_type=b'application/json')
 
 

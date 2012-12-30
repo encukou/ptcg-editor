@@ -13,41 +13,10 @@
     <meta name="author" content="">
 
     <link href="${asset_url('css/bootstrap.css')}" rel="stylesheet">
-    <link href="${asset_url('css/ptcg-symbols.css')}" rel="stylesheet">
-    <link href="${asset_url('css/prettify.css')}" type="text/css" rel="stylesheet" />
-    <style>
-      body {
-        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
-        padding-bottom: 10px;
-      }
-      dl, dd, dt {
-        margin-top: 0px;
-        margin-bottom: 0px;
-      }
-      body .row-fluid [class*="span"] {
-        min-height: 0px;
-      }
-      .mechanic-type, .mechanic-name, dt {
-        font-weight: bold;
-      }
-      @media (min-width: 767px) {
-        .mechanic-type, dt {
-            text-align: right;
-        }
-        .mechanic-name {
-            text-align: center;
-        }
-      }
-      @media (max-width: 767px) {
-        dt {
-          margin-top: 5px
-        }
-      }
-      footer {
-        font-size: 75%;
-      }
-    </style>
     <link href="${asset_url('css/bootstrap-responsive.css')}" rel="stylesheet">
+    <link href="${asset_url('css/ptcg-symbols.css')}" rel="stylesheet">
+    <link href="${asset_url('css/ptcg-editor.css')}" rel="stylesheet">
+    <link href="${asset_url('css/prettify.css')}" rel="stylesheet" />
 
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
