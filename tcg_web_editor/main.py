@@ -1,6 +1,8 @@
 from wsgiref.simple_server import make_server
+
 from pyramid.config import Configurator
 from pyramid.request import Request
+from pyramid.httpexceptions import HTTPMovedPermanently
 
 from pokedex.db import connect
 
@@ -8,6 +10,15 @@ from tcg_web_editor.resource import Resource
 from tcg_web_editor.resource.tcgdex import Root
 
 def view(context, request):
+    want = context.url
+    if request.path == '/':
+        want += '/'
+    if request.path_url != want:
+        new_url = context.url
+        if request.query_string:
+            new_url += '?' + request.query_string
+        print request.path_url, '->', new_url
+        raise HTTPMovedPermanently(new_url)
     return context()
 
 def make_app(global_config, **settings):

@@ -6,7 +6,7 @@ import json
 
 from pyramid.response import Response
 from pyramid.renderers import render
-from pyramid.traversal import find_interface, traverse
+from pyramid.traversal import traverse
 from pyramid.decorator import reify
 from pyramid.location import lineage
 from markupsafe import Markup
@@ -15,16 +15,14 @@ from ptcgdex import load
 
 from tcg_web_editor import template_helpers as helpers
 
-_UNDEFINED = object()
-
 class Resource(object):
-    def __init__(self, parent, name=_UNDEFINED, request=None):
+    def __init__(self, parent, name=None, request=None):
         self.__parent__ = self.parent = parent
         if parent:
             self.root = parent.root
         else:
             self.root = self
-        if name is not _UNDEFINED:
+        if self.name is None:
             self.name = name
         if request is None:
             self.request = parent.request
@@ -41,6 +39,8 @@ class Resource(object):
         root = cls(parent=None, name=None, request=request)
         root.root = root
         return root
+
+    name = None
 
     @reify
     def __name__(self):
