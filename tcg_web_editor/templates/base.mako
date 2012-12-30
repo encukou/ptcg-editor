@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<%def name="extra_scripts()"></%def>
+
 <html lang="en">
   <head>
     % if this is this.root:
@@ -102,6 +104,7 @@
         $(".tooltipped").tooltip();
         $(prettyPrint);
     </script>
+    ${self.extra_scripts()}
 
   </body>
 </html>

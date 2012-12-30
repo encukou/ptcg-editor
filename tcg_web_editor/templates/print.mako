@@ -15,7 +15,7 @@ flavor = print_.pokemon_flavor
     <h1>${print_.card.name} <small>${print_.set.name} #${print_.set_number}</small></h1>
 
     <ul class="nav nav-tabs">
-    <li class="active"><a href="#edittabs-view" data-toggle="tab">View</a></li>
+    <li><a href="#edittabs-view" data-toggle="tab">View</a></li>
     <li><a href="#edittabs-json" data-toggle="tab">Data</a></li>
     </ul>
 
@@ -236,7 +236,7 @@ flavor = print_.pokemon_flavor
 
 </div>
 </div>
-<div class="tab-pane" id="edittabs-json">
+<div class="tab-pane active" id="edittabs-json">
 <div class="container">
 
 <h2>JSON Data</h2>
@@ -272,6 +272,15 @@ ${json.dumps(this.__json__(), sort_keys=True, ensure_ascii=False, indent=4)}
         % endif
     </ul>
 </div>
+
+<%def name="extra_scripts()">
+    <script language="javascript">
+        $(function(){
+            $('ul.nav.nav-tabs a').tab('show');
+            $('ul.nav.nav-tabs a:first').tab('show');
+        })
+    </script>
+</%def>
 
 <% ''' TODO:
 legal: false
