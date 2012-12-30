@@ -96,10 +96,10 @@
             for <a href="http://pokebeach.com/">PokéBeach</a>.
     </footer>
 
-    <script type="text/javascript" src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
-    <script type="text/javascript" src="${asset_url('js/bootstrap.js')}"></script>
-    <script type="text/javascript" src="${asset_url('js/prettify.js')}"></script>
-    <script type="text/javascript">
+    <script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+    <script src="${asset_url('js/bootstrap.js')}"></script>
+    <script src="${asset_url('js/prettify.js')}"></script>
+    <script>
         $(".ptcg-type").tooltip();
         $(".tooltipped").tooltip();
         $(prettyPrint);

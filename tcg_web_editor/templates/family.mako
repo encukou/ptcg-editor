@@ -15,6 +15,7 @@ prints.sort(key=print_sort_key)
 
     <h1>Cards named ${this.family.name}</h1>
 
+    <form action="${this.url}/diff" method="GET">
     <table class="table table-hover">
     <thead>
         <tr>
@@ -22,6 +23,7 @@ prints.sort(key=print_sort_key)
             <th>No.</th>
             <th>Card</th>
             <th colspan="2">Exact Reprints</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -74,6 +76,11 @@ prints.sort(key=print_sort_key)
                 <% seen_mechanic_notes.add(mechanic_note) %>
             % endif
         </td>
+        <td>
+            <% name = '/'.join([this.name, wrap(print_).name]) %>
+            <input type="radio" name="card-a" value="${name}">
+            <input type="radio" name="card-b" value="${name}">
+        </td>
     </tr>
     % endfor
     </tbody>
@@ -86,5 +93,6 @@ prints.sort(key=print_sort_key)
         </tr>
     </tfoot>
     </table>
+    </form>
 
 </div>
