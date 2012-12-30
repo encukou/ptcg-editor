@@ -97,6 +97,14 @@ class Resource(object):
     def get(self, item):
         raise KeyError(item)
 
+    def iter_children(self):
+        for attr_name in dir(self):
+            if attr_name.startswith('child_'):
+                yield self[attr_name[6:]]
+
+    def iter_dynamic(self):
+        return ()
+
 
 class TemplateResource(Resource):
     def render_response(self, template_name=None, **kwargs):

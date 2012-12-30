@@ -17,15 +17,23 @@ class Sets(TemplateResource):
     template_name = 'sets.mako'
     friendly_name = 'Sets'
 
-    def init(self):
-        self.sets = self.request.db.query(tcg_tables.Set).all()
-        self.sets_by_identifier = {s.identifier: s for s in self.sets}
+    @reify
+    def sets(self):
+        return self.request.db.query(tcg_tables.Set).all()
+
+    @reify
+    def sets_by_identifier(self):
+        return {s.identifier: s for s in self.sets}
 
     def get(self, set_ident):
         return self.wrap(self.sets_by_identifier[set_ident])
 
     def wrap(self, tcg_set):
         return Set(self, tcg_set)
+
+    def iter_dynamic(self):
+        for entity in self.sets:
+            yield self.wrap(entity)
 
 
 class Set(TemplateResource):
@@ -118,9 +126,10 @@ class Families(TemplateResource):
         if self is not self.base_families:
             return self.base_families[family_identifier]
         if len(family_identifier) == 1:
+            if family_identifier not in string.ascii_lowercase:
+                raise KeyError(family_identifier)
             return Families(
                 self.base_families, family_identifier, family_identifier)
-        print family_identifier, self.family_query
         family = self.family_query.filter(
             tcg_tables.CardFamily.identifier == family_identifier).one()
         return self.wrap(family)
@@ -144,6 +153,13 @@ class Families(TemplateResource):
         else:
             return 'Cards'
 
+    def iter_dynamic(self):
+        for entity in self.filtered_query:
+            yield self.wrap(entity)
+        if not self.first_letter:
+            for letter in string.ascii_lowercase:
+                yield self[letter]
+
 
 class Family(TemplateResource):
     template_name = 'family.mako'
@@ -164,15 +180,20 @@ class Family(TemplateResource):
     def short_name(self):
         return self.family.name
 
+    @reify
+    def query(self):
+        query = self.request.db.query(tcg_tables.Print)
+        query = query.join(tcg_tables.Print.set)
+        query = query.join(tcg_tables.Print.card)
+        query = query.filter(tcg_tables.Card.family == self.family)
+        return query
+
     def get(self, set_and_number):
         try:
             set_identifier, number = set_and_number.split('~')
         except ValueError:
             raise LookupError('Must include a ~ character')
-        query = self.request.db.query(tcg_tables.Print)
-        query = query.join(tcg_tables.Print.set)
-        query = query.join(tcg_tables.Print.card)
-        query = query.filter(tcg_tables.Card.family == self.family)
+        query = self.query
         query = query.filter(tcg_tables.Set.identifier == set_identifier)
         query = query.filter(func.lower(tcg_tables.Print.set_number) == number)
         try:
@@ -186,6 +207,9 @@ class Family(TemplateResource):
             return self.root.wrap(print_.card.family).wrap(print_)
         return Print(self, print_)
 
+    def iter_dynamic(self):
+        for entity in self.query:
+            yield self.wrap(entity)
 
 
 class Illustrators(TemplateResource):
@@ -203,6 +227,10 @@ class Illustrators(TemplateResource):
 
     def wrap(self, entity):
         return Illustrator(self, entity)
+
+    def iter_dynamic(self):
+        for entity in self.illustrator_query:
+            yield self.wrap(entity)
 
 
 class Illustrator(TemplateResource):

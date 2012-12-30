@@ -17,11 +17,10 @@ def view(context, request):
         new_url = context.url
         if request.query_string:
             new_url += '?' + request.query_string
-        print request.path_url, '->', new_url
         raise HTTPMovedPermanently(new_url)
     return context()
 
-def make_app(global_config, **settings):
+def get_config(**settings):
     settings.setdefault('mako.directories', 'tcg_web_editor:templates/')
     settings.setdefault('mako.input_encoding', 'utf-8')
 
@@ -37,6 +36,10 @@ def make_app(global_config, **settings):
     config.add_static_view('scans', 'tcg_web_editor:scans')
 
     config.add_view(view, context=Resource)
+    return config
+
+def make_app(global_config=None, **settings):
+    config = get_config(**settings)
     return config.make_wsgi_app()
 
 def serve():
