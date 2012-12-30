@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
     % if this is this.root:
         <title>${this.friendly_name}</title>
     % else:

@@ -85,7 +85,7 @@ flavor = print_.pokemon_flavor
             % endif
             </dt>
             <dd class="span10">
-                ${link(evo.family, text=evo.family.name)}</a>
+                ${link(evo.family, text=evo.family.name)}
             </dd>
         </dl>
         % endfor
@@ -163,7 +163,7 @@ flavor = print_.pokemon_flavor
         </dl>
         <dl class="row-fluid">
             <dt class="span2">Illustrator</dt>
-            <dd class="span10">${link(print_.illustrator)}</a></dd>
+            <dd class="span10">${link(print_.illustrator)}</dd>
         </dl>
 
         <h2>Sets &amp; Reprints</h2>
@@ -226,8 +226,9 @@ flavor = print_.pokemon_flavor
     </div>
     <div class="span2">
     %if print_.scans:
-    <a href="/scans/${print_.set.identifier}/${print_.scans[0].filename}.jpg" rel="lightbox">
-        <img src="/scans/${print_.set.identifier}/${print_.scans[0].filename}.jpg">
+    <a href="/scans/${print_.set.identifier}/${print_.scans[0].filename}.jpg">
+        <img src="/scans/${print_.set.identifier}/${print_.scans[0].filename}.jpg"
+            alt="Card scan">
     </a>
     % endif
     </div>

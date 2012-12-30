@@ -77,6 +77,14 @@ prints.sort(key=print_sort_key)
     </tr>
     % endfor
     </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="5"></td>
+            <td>
+                <input type="submit" value="Diff">
+            </td>
+        </tr>
+    </tfoot>
     </table>
 
 </div>
