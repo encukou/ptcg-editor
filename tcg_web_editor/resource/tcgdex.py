@@ -3,6 +3,8 @@
 from __future__ import unicode_literals
 
 from pyramid.decorator import reify
+from sqlalchemy.orm import (
+    joinedload, joinedload_all, subqueryload, subqueryload_all, lazyload)
 
 from pokedex.db import util as dbutil
 from ptcgdex import tcg_tables
@@ -56,11 +58,23 @@ class Illustrators(TemplateResource):
     def init(self):
         query = self.request.db.query(tcg_tables.Illustrator)
         query = query.order_by(tcg_tables.Illustrator.name)
+        for key in (
+                'prints.set.names_local',
+                'prints.card.family.names_local',
+                'prints.card.class_',
+                'prints.card.card_types.type.names_local',
+                'prints.card.card_mechanics.mechanic.names_local',
+            ):
+            query = query.options(joinedload_all(key))
+        query = query.options(subqueryload('prints.card.card_types'))
+        query = query.options(subqueryload('prints.card.card_mechanics'))
+        query = query.options(lazyload('prints'))
         self.illustrator_query = query
 
     def get(self, ident):
-        return self.wrap(dbutil.get(
-            self.request.db, tcg_tables.Illustrator, ident))
+        query = self.illustrator_query.filter_by(identifier=ident)
+        query = query.options(subqueryload('prints'))
+        return self.wrap(query.one())
 
     def wrap(self, entity):
         return Illustrator(self, entity)
