@@ -12,3 +12,5 @@
     </p>
 
 </div>
+
+<%include file="diff_form.mako" />
