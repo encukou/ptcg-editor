@@ -87,9 +87,11 @@ def format_redirect_count(term, count):
     if count == 0:
         return ' '
     elif count == 1:
-        return '>'
+        return '→'
+    elif count == 2:
+        return term.red('⇉')
     else:
-        return term.red('»')
+        return term.red('⇶')
 
 
 def format_status(term, status, fmt):

@@ -47,18 +47,20 @@ class Print(TemplateResource):
     def __call__(self):
         query = self.request.db.query(tcg_tables.Print)
         query = query.filter(tcg_tables.Print.set == self.print_.set)
+        query = query.options(joinedload_all('card.family.names_local'))
 
-        def prev_next(offset):
-            num = self.print_.order + offset
-            q = query.filter(tcg_tables.Print.order == num)
-            try:
-                return q.one()
-            except NoResultFound:
-                return None
+        num = self.print_.order
+        query = query.filter(tcg_tables.Print.order.in_([num + 1, num - 1]))
+        prev_print = next_print = None
+        for p in query:
+            if p.order == num + 1:
+                prev_print = p
+            elif p.order == num + 1:
+                next_print = p
 
         return self.render_response(
-            prev_print=prev_next(-1),
-            next_print=prev_next(+1),
+            prev_print=prev_print,
+            next_print=next_print,
         )
 
     def __json__(self):
@@ -108,6 +110,13 @@ class Families(TemplateResource):
                 self.base_families, family_identifier, family_identifier)
         query = self.family_query.filter(
             tcg_tables.CardFamily.identifier == family_identifier)
+        query = query.options(joinedload_all('cards.class_.names_local'))
+        query = query.options(joinedload_all('cards.prints.set.names_local'))
+        query = query.options(joinedload_all('cards.card_mechanics.mechanic.names_local'))
+        query = query.options(joinedload_all('cards.card_types.type.names_local'))
+        query = query.options(subqueryload('cards.prints.set'))
+        query = query.options(subqueryload('cards.card_mechanics'))
+        query = query.options(subqueryload('cards.card_types'))
         try:
             family = query.one()
         except NoResultFound:
@@ -278,6 +287,34 @@ class Family(TemplateResource):
         query = self.query
         query = query.filter(tcg_tables.Set.identifier == set_identifier)
         query = query.filter(func.lower(tcg_tables.Print.set_number) == number)
+        query = query.options(joinedload_all('card.family.names_local'))
+        query = query.options(joinedload_all('card.card_subclasses.subclass.names_local'))
+        query = query.options(joinedload_all('rarity.names_local'))
+        query = query.options(joinedload_all('pokemon_flavor.flavor_local'))
+        query = query.options(joinedload_all('pokemon_flavor.species.names_local'))
+        query = query.options(joinedload_all('card.card_mechanics.mechanic.effects_local'))
+        query = query.options(joinedload_all('card.card_mechanics.mechanic.class_.names_local'))
+        query = query.options(joinedload_all('card.card_types.type.names_local'))
+        query = query.options(joinedload_all('card.stage.names_local'))
+        query = query.options(joinedload_all('illustrator'))
+        query = query.options(joinedload_all('card.evolutions.family.names_local'))
+        query = query.options(joinedload_all('card.family.evolutions.card.family.names_local'))
+        query = query.options(joinedload_all('card.family.evolutions.card.prints.set.names_local'))
+        query = query.options(joinedload_all('card.family.evolutions.card.card_mechanics.mechanic.names_local'))
+        query = query.options(joinedload_all('card.card_mechanics.mechanic.costs.type.names_local'))
+        query = query.options(joinedload_all('card.damage_modifiers.type.names_local'))
+        query = query.options(subqueryload('card.card_mechanics'))
+        query = query.options(subqueryload('card.card_mechanics.mechanic.costs'))
+        query = query.options(subqueryload('card.card_subclasses'))
+        query = query.options(subqueryload('card.prints'))
+        query = query.options(subqueryload('card.damage_modifiers'))
+        query = query.options(subqueryload('card.family.evolutions'))
+        query = query.options(subqueryload('card.family.evolutions.card.prints'))
+        query = query.options(subqueryload('card.family.evolutions.card.card_mechanics'))
+        query = query.options(subqueryload('card.family.cards.prints'))
+        query = query.options(subqueryload('scans'))
+        query = query.options(lazyload('pokemon_flavor.species.default_pokemon'))
+        query = query.options(lazyload('pokemon_flavor.species.evolutions'))
         try:
             print_ = query[0]
         except NoResultFound:

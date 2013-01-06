@@ -101,8 +101,11 @@ flavor = print_.pokemon_flavor
             <dd class="span10">
                 <a href="${wrap(evo.card.prints[0]).url}">
                     ${evo.card.name}
-                    <span class="muted">(${', '.join('{} #{}'.format(
-                        p.set.name, p.set_number) for p in evo.card.prints)})</span>
+                    <span class="muted">
+                        ${h.card_named_mechanic_note(evo.card)}:
+                        ${', '.join('{} #{}'.format(
+                            p.set.name, p.set_number) for p in evo.card.prints)}
+                    </span>
                 </a>
             </dd>
         </dl>
@@ -217,8 +220,8 @@ flavor = print_.pokemon_flavor
             </div>
 
             <p>
-                See the
-                <a href="${wrap(card.family).url}">${card.name} card family</a>
+                See all
+                <a href="${wrap(card.family).url}">cards named ${card.name}</a>
                 for more details.
             </p>
         % endif
