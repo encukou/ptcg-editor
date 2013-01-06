@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 from pyramid.decorator import reify
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import (
     joinedload, joinedload_all, subqueryload, subqueryload_all, lazyload)
 
@@ -17,21 +18,36 @@ class Sets(TemplateResource):
     friendly_name = 'Sets'
 
     @reify
-    def sets(self):
-        return self.request.db.query(tcg_tables.Set).all()
+    def query(self):
+        query = self.request.db.query(tcg_tables.Set)
+        query = query.options(joinedload('names_local'))
+        return query
 
     @reify
-    def sets_by_identifier(self):
-        return {s.identifier: s for s in self.sets}
+    def sets(self):
+        return self.query.all()
 
     def get(self, set_ident):
-        return self.wrap(self.sets_by_identifier[set_ident])
+        query = self.query
+        query = query.filter_by(identifier=set_ident)
+        query = query.options(joinedload('names_local'))
+        query = query.options(joinedload_all('prints.card.family.names_local'))
+        query = query.options(joinedload_all('prints.card.class_.names_local'))
+        query = query.options(joinedload_all('prints.card.card_types.type.names_local'))
+        query = query.options(joinedload_all('prints.card.card_mechanics.mechanic.names_local'))
+        query = query.options(subqueryload('prints'))
+        query = query.options(subqueryload('prints.card.card_mechanics'))
+        try:
+            tcg_set = query.one()
+        except NoResultFound:
+            raise LookupError(set_ident)
+        return self.wrap(tcg_set)
 
     def wrap(self, tcg_set):
         return Set(self, tcg_set)
 
     def iter_dynamic(self):
-        for entity in self.sets:
+        for entity in self.query.all():
             yield self.wrap(entity)
 
 

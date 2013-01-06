@@ -53,6 +53,16 @@ def format_time(term, time, fmt):
         return term.red(result)
 
 
+def format_sqla_time(term, time, fmt):
+    result = fmt.format(time)
+    if time < 10:
+        return term.white(result)
+    elif time < 20:
+        return term.yellow(result)
+    else:
+        return term.red(result)
+
+
 def format_size(term, size, fmt):
     result = fmt.format(size)
     if size < 1024 * 50:
@@ -75,9 +85,9 @@ def format_num_queries(term, num, fmt, distinct):
 
 def format_distinct_queries(term, num, fmt):
     result = fmt.format(num)
-    if num <= 5:
+    if num <= 10:
         return term.white(result)
-    elif num < 10:
+    elif num < 20:
         return term.yellow(result)
     else:
         return term.red(result)
@@ -155,6 +165,7 @@ def check_page(app, path, query_string=''):
         format_size(term, len(output), '{0:8d} '),
         format_num_queries(term, len(queries), '{0:4d} ', len(distinct_queries)),
         format_distinct_queries(term, len(distinct_queries), '{0:3d} '),
+        format_sqla_time(term, sum(q['duration'] for q in queries) * 1000, '{0:4.1f} '),
         format_redirect_count(term, redirect_count),
         format_status(term, status, '{0:3} '),
         ' ' * 9
@@ -181,8 +192,8 @@ def check_pages():
     config = main.get_config()
     config.add_subscriber(context_found_subscriber, ContextFound)
     app = config.make_wsgi_app()
-    print '---------------- URL ---------------- - time - - size - - SQLA - HTTP ---------'
-    print '                                       s        m  k  b  num dst      ---------'
+    print '---------------- URL ---------------- - time - - size - --- SQLA ---- HTTP ----'
+    print '                                       s        m  k  b  num dst time      ----'
     check_page(app, '/')
 
 
