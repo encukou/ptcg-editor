@@ -18,7 +18,7 @@ from ptcgdex import tcg_tables
     <tbody>
     % for print_ in this.illustrator.prints:
         <tr>
-            <td>${link(print_.set)}</a></td>
+            <td>${link(print_.set)}</td>
             <td>${print_.set_number}</td>
             <td>
                 <a href="${wrap(print_).url}">

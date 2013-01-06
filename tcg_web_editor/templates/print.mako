@@ -277,7 +277,7 @@ flavor = print_.pokemon_flavor
 </div>
 
 <%def name="extra_scripts()">
-    <script language="javascript">
+    <script>
         $(function(){
             $('ul.nav.nav-tabs a').tab('show');
             $('ul.nav.nav-tabs a:first').tab('show');

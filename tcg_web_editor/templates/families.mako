@@ -21,7 +21,7 @@ def active(page):
         <ul>
             <li ${active(this.base_families)}>${link(this.base_families, text="@")}</li>
             % for s in string.ascii_lowercase:
-                <li ${active(this[s])}>${link(this[s], text=s.upper())}</a></li>
+                <li ${active(this[s])}>${link(this[s], text=s.upper())}</li>
             % endfor
         </ul>
     </div>

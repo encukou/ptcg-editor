@@ -22,7 +22,7 @@
         <p>
             Currently, we have
             ${link('sets', text='{} sets'.format(set_query.count()))} with
-            ${link('cards', text='{} cards'.format(card_query.count()))}</span>.
+            ${link('cards', text='{} cards'.format(card_query.count()))}.
         </p>
 
     </div>

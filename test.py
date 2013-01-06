@@ -6,6 +6,7 @@ import sys
 import time
 import itertools
 import urlparse
+import requests
 from StringIO import StringIO
 
 from sqlalchemy import event
@@ -15,6 +16,10 @@ from pyramid.events import ContextFound
 from blessings import Terminal  # pip install blessings
 
 from tcg_web_editor import main
+
+# Run http://about.validator.nu/#src at the following address:
+# (or use 'http://validator.nu/' if you really can't)
+VALIDATOR_URL = 'http://localhost:8888/'
 
 queries = []
 contexts = []
@@ -112,6 +117,16 @@ def format_status(term, status, fmt):
         return term.red(result)
 
 
+def format_valid(term, valid, fmt):
+    result = fmt.format(valid)
+    if valid == '✓':
+        return result
+    elif valid == '?':
+        return term.yellow(result)
+    else:
+        return term.red(result)
+
+
 def do_request(app, path, query_string=''):
     environ = {
         'REQUEST_METHOD': "GET",
@@ -143,18 +158,38 @@ def do_request(app, path, query_string=''):
     return status, headers, output, end - start
 
 
+def html5_validate(output):
+    try:
+        response = requests.post(VALIDATOR_URL,
+            params={b'out': b'gnu'},
+            headers={b'Content-Type': b'text/html; charset=utf-8'},
+            data=output.encode('utf-8'))
+    except ConnectionError:
+        return '?'
+    if response.text == '':
+        return '✓'
+    else:
+        return '✖'
+
+
 def check_page(app, path, query_string=''):
     total_time = 0
     for redirect_count in range(2):
         status, headers, output, elapsed = do_request(app, path, query_string)
+        headers = dict(headers)
         total_time += elapsed
         try:
-            url = dict(headers)['Location']
+            url = headers['Location']
             _s, _n, path, query_string, _f = urlparse.urlsplit(url)
         except KeyError:
             break
     [context] = contexts
 
+
+    if headers['Content-Type'].startswith('text/html'):
+        valid = html5_validate(output)
+    else:
+        valid = ' '
 
     distinct_queries = set(q['statement'] for q in queries)
     resultlines = {}
@@ -168,7 +203,8 @@ def check_page(app, path, query_string=''):
         format_sqla_time(term, sum(q['duration'] for q in queries) * 1000, '{0:4.1f} '),
         format_redirect_count(term, redirect_count),
         format_status(term, status, '{0:3} '),
-        ' ' * 9
+        format_valid(term, valid, '{0:1} '),
+        ' ' * 2
     ])
 
     if 80 + len(context.url) < term.width:
@@ -192,8 +228,8 @@ def check_pages():
     config = main.get_config()
     config.add_subscriber(context_found_subscriber, ContextFound)
     app = config.make_wsgi_app()
-    print '---------------- URL ---------------- - time - - size - --- SQLA ---- HTTP ----'
-    print '                                       s        m  k  b  num dst time      ----'
+    print '---------------- URL ---------------- - time - - size - --- SQLA ---- HTTP V --'
+    print '                                       s        m  k  b  num dst time        --'
     check_page(app, '/')
 
 
