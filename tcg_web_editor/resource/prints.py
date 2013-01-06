@@ -13,6 +13,8 @@ from pyramid.httpexceptions import HTTPMovedPermanently, HTTPNotFound
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 from markupsafe import Markup
+from sqlalchemy.orm import (
+    joinedload, joinedload_all, subqueryload, subqueryload_all, lazyload)
 
 from pokedex.db import util as dbutil
 from ptcgdex import tcg_tables, load
@@ -75,16 +77,23 @@ class Families(TemplateResource):
             self.base_families = self
         super(Families, self).__init__(parent, name)
 
-    def init(self):
+    @reify
+    def family_query(self):
         query = self.request.db.query(tcg_tables.CardFamily)
         query = dbutil.order_by_name(query, tcg_tables.CardFamily)
-        self.family_query = query
+        query = query.options(joinedload('names_local'))
+        query = query.options(subqueryload('cards.prints'))
+        query = query.options(subqueryload('cards'))
+        return query
+
+    @reify
+    def filtered_query(self):
         if self.first_letter:
-            self.filtered_query = query.filter(
+            return self.family_query.filter(
                 func.lower(tcg_tables.CardFamily.names_table.name).like(
                     '{}%'.format(self.first_letter)))
         else:
-            self.filtered_query = query.filter(
+            return self.family_query.filter(
                 ~func.lower(func.substr(
                         tcg_tables.CardFamily.names_table.name, 1, 1)).in_(
                     string.ascii_lowercase))
