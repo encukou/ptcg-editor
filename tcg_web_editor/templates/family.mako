@@ -88,6 +88,8 @@ prints.sort(key=print_sort_key)
         <tr>
             <td colspan="5"></td>
             <td>
+                <input type="hidden" name="diff" value="uni">
+                <input type="hidden" name="fmt" value="yaml">
                 <input type="submit" value="Diff">
             </td>
         </tr>

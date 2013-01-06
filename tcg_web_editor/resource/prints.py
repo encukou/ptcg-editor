@@ -6,6 +6,7 @@ import string
 import json
 import difflib
 import itertools
+import re
 
 from pyramid.response import Response
 from pyramid.decorator import reify
@@ -208,6 +209,7 @@ class Diff(TemplateResource):
         elif self.diff_style == 'uni':
             differ = difflib.SequenceMatcher(a=lines[0], b=lines[1])
             rows = []
+            nonword_re = re.compile(r'(\s+|[^\s\w])')
             for tag, i1, i2, j1, j2 in differ.get_opcodes():
                 if tag == 'equal':
                     assert lines[0][i1:i2] == lines[1][j1:j2]
@@ -216,15 +218,45 @@ class Diff(TemplateResource):
                             {'num': i, 'text': lines[0][i], 'cls': 'same'},
                             {'num': j, 'text': None, 'cls': ''},
                         ])
+                elif tag == 'replace':
+                    l1 = nonword_re.split('\n'.join(lines[0][i1:i2]))
+                    l2 = nonword_re.split('\n'.join(lines[1][j1:j2]))
+                    linematcher = difflib.SequenceMatcher(a=l1, b=l2)
+                    lineparts = [[], []]
+                    for tag, ii1, ii2, jj1, jj2 in linematcher.get_opcodes():
+                        a = ''.join(l1[ii1:ii2])
+                        b = ''.join(l2[jj1:jj2])
+                        if a == b:
+                            lineparts[0].append(a)
+                            lineparts[1].append(b)
+                        else:
+                            if a:
+                                lineparts[0].append(Markup(
+                                    '<span class="d">{}</span>').format(a).
+                                    replace('\n', Markup('</span>\n<span class="d">')))
+                            if b:
+                                lineparts[1].append(Markup(
+                                    '<span class="d">{}</span>').format(b).
+                                    replace('\n', Markup('</span>\n<span class="d">')))
+                    for n, line in enumerate(Markup().join(lineparts[0]).splitlines()):
+                        rows.append([
+                            {'num': i + n + 1, 'text': line, 'cls': 'a different'},
+                            {'num': None, 'text': None, 'cls': ''},
+                        ])
+                    for n, line in enumerate(Markup().join(lineparts[1]).splitlines()):
+                        rows.append([
+                            {'num': None, 'text': line, 'cls': 'b different'},
+                            {'num': j + n + 1, 'text': None, 'cls': ''},
+                        ])
                 else:
                     for i in range(i1, i2):
                         rows.append([
-                            {'num': i, 'text': lines[0][i], 'cls': 'a different'},
+                            {'num': i, 'text': lines[0][i], 'cls': 'a d different'},
                             {'num': None, 'text': None, 'cls': ''},
                         ])
                     for j in range(j1, j2):
                         rows.append([
-                            {'num': None, 'text': lines[1][j], 'cls': 'b different'},
+                            {'num': None, 'text': lines[0][j], 'cls': 'b d different'},
                             {'num': j, 'text': None, 'cls': ''},
                         ])
         else:

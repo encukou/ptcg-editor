@@ -106,3 +106,16 @@ table.diff-table td.a.different {
 table.diff-table td.b.different {
     background-color: #E0FFE0;
 }
+table.diff-table td.a.different .d {
+    background-color: #FF8C8C;
+}
+table.diff-table td.b.different .d {
+    background-color: #82FF82;
+}
+table.diff-table.diff-table-uni td.different {
+    font-weight: normal;
+}
+table.diff-table td.different.d,
+table.diff-table td.different .d {
+    font-weight: bold;
+}
