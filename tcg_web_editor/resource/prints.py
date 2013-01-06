@@ -54,7 +54,7 @@ class Print(TemplateResource):
         query = query.filter(tcg_tables.Print.order.in_([num + 1, num - 1]))
         prev_print = next_print = None
         for p in query:
-            if p.order == num + 1:
+            if p.order == num - 1:
                 prev_print = p
             elif p.order == num + 1:
                 next_print = p
