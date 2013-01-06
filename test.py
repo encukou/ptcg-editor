@@ -1,6 +1,11 @@
+# Encoding: UTF-8
+
+from __future__ import unicode_literals
+
 import sys
 import time
 import itertools
+import urlparse
 from StringIO import StringIO
 
 from sqlalchemy import event
@@ -78,7 +83,24 @@ def format_distinct_queries(term, num, fmt):
         return term.red(result)
 
 
-def check_page(app, path, query_string=''):
+def format_redirect_count(term, count):
+    if count == 0:
+        return ' '
+    elif count == 1:
+        return '>'
+    else:
+        return term.red('»')
+
+
+def format_status(term, status, fmt):
+    result = fmt.format(status)
+    if status == 200:
+        return term.white(result)
+    else:
+        return term.red(result)
+
+
+def do_request(app, path, query_string=''):
     environ = {
         'REQUEST_METHOD': "GET",
         'SCRIPT_NAME': "",
@@ -95,59 +117,70 @@ def check_page(app, path, query_string=''):
         'wsgi.multiprocess': False,
         'wsgi.run_once': False,
     }
+    response_info = [None]
     def start_response(status, response_headers, exc_info=None):
-        #print 'STARTED RESPONSE', (status, response_headers, exc_info)
+        assert exc_info is None
+        response_info[:] = int(status[:3]), response_headers
         def write():
             raise RuntimeError('Not Implemented')
         return write
     start = time.time()
-    output = ''.join(app(environ, start_response))
+    output = ''.join(s.decode('utf-8') for s in app(environ, start_response))
     end = time.time()
+    status, headers = response_info
+    return status, headers, output, end - start
+
+
+def check_page(app, path, query_string=''):
+    total_time = 0
+    for redirect_count in range(2):
+        status, headers, output, elapsed = do_request(app, path, query_string)
+        total_time += elapsed
+        try:
+            url = dict(headers)['Location']
+            _s, _n, path, query_string, _f = urlparse.urlsplit(url)
+        except KeyError:
+            break
     [context] = contexts
 
 
     distinct_queries = set(q['statement'] for q in queries)
     resultlines = {}
-    for styling_on in False, True:
-        orig_stdout = sys.stdout
-        if not styling_on:
-            sys.stdout = open('/dev/null')
-        term = Terminal()
-        sys.stdout = orig_stdout
-        resultlines[styling_on] = ''.join([
-            '{0:37} '.format(path if path == '/' else ' ' * path.count('/') + path.split('/')[-1]),
-            format_time(term, end - start, '{0:8.5f} '),
-            format_size(term, len(output), '{0:8d} '),
-            format_num_queries(term, len(queries), '{0:4d} ', len(distinct_queries)),
-            format_distinct_queries(term, len(distinct_queries), '{0:3d} '),
-            '{0:4.1f} '.format(min(q['duration'] for q in queries) * 1000),
-            '{0:4.1f} '.format(max(q['duration'] for q in queries) * 1000),
-            '{0:4.1f}'.format(sum(q['duration'] for q in queries) / len(queries) * 1000),
-        ])
+    term = Terminal()
+    resultline = ''.join([
+        '{0:37} '.format(path if path == '/' else ' ' * path.count('/') + path.split('/')[-1]),
+        format_time(term, total_time, '{0:8.5f} '),
+        format_size(term, len(output), '{0:8d} '),
+        format_num_queries(term, len(queries), '{0:4d} ', len(distinct_queries)),
+        format_distinct_queries(term, len(distinct_queries), '{0:3d} '),
+        format_redirect_count(term, redirect_count),
+        format_status(term, status, '{0:3} '),
+        ' ' * 9
+    ])
 
-    full_lines = {f: '{} {}'.format(resultlines[f], context.url) for f in resultlines}
-    if len(full_lines[False]) < term.width:
-        print full_lines[True]
+    if 80 + len(context.url) < term.width:
+        print resultline.encode('utf-8'), context.url
     else:
-        print resultlines[True]
+        print resultline.encode('utf-8')
 
     queries[:] = []
     context.request.db.rollback()
 
-    for child in itertools.chain(context.iter_children(), list(context.iter_dynamic())[:5]):
-        if path == '/':
-            new_path = path + child.name
-        else:
-            new_path = '/'.join([path, child.name])
-        check_page(app, new_path)
+    if status == 200:
+        for child in itertools.chain(context.iter_children(), list(context.iter_dynamic())[:5]):
+            if path == '/':
+                new_path = path + child.name
+            else:
+                new_path = '/'.join([path, child.name])
+            check_page(app, new_path)
 
 
 def check_pages():
     config = main.get_config()
     config.add_subscriber(context_found_subscriber, ContextFound)
     app = config.make_wsgi_app()
-    print '---------------- URL ---------------- - time - - size - -------- SQLA ---------'
-    print '                                       s        m  k  b  num dst  min  max  avg'
+    print '---------------- URL ---------------- - time - - size - - SQLA - HTTP ---------'
+    print '                                       s        m  k  b  num dst      ---------'
     check_page(app, '/')
 
 
