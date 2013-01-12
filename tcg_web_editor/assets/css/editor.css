@@ -1,0 +1,6 @@
+.editor-field {
+    transition: background-color 0.5s ease-in-out;
+}
+.editor-field.unsaved {
+    background-color: #FFDDDD;
+}

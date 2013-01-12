@@ -33,7 +33,7 @@ flavor = print_.pokemon_flavor
 
         <dl class="row-fluid">
             <dt class="span2">Name</dt>
-            <dd class="span4">${card.name}</dd>
+            <dd class="span4" data-key="name" data-type="str">${card.name}</dd>
             <dt class="span2">Card class</dt>
             <dd class="span4">${card.class_.name}</dd>
         </dl>
@@ -276,8 +276,13 @@ flavor = print_.pokemon_flavor
     </ul>
 </div>
 
+<%def name="extra_css()">
+    <link href="${asset_url('css/editor.css')}" rel="stylesheet" />
+</%def>
+
 <%def name="extra_scripts()">
     <script src="${asset_url('js/prettify.js')}"></script>
+    <script src="${asset_url('js/editor.js')}"></script>
     <script>
         $(function(){
             $('ul.nav.nav-tabs a').tab('show');
@@ -289,6 +294,7 @@ flavor = print_.pokemon_flavor
             });
         })
         $(prettyPrint);
+        $.tcg_editor("${'{}/{}'.format(this.parent.name, this.name)}");
     </script>
 </%def>
 

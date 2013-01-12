@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <%def name="extra_scripts()"></%def>
+<%def name="extra_css()"></%def>
 
 <html lang="en">
   <head>
@@ -17,6 +18,7 @@
     <link href="${asset_url('css/ptcg-symbols.css')}" rel="stylesheet">
     <link href="${asset_url('css/ptcg-editor.css')}" rel="stylesheet">
     <link href="${asset_url('css/prettify.css')}" rel="stylesheet" />
+    ${self.extra_css()}
 
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
