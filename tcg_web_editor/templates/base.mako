@@ -67,11 +67,9 @@
 
     <script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
     <script src="${asset_url('js/bootstrap.js')}"></script>
-    <script src="${asset_url('js/prettify.js')}"></script>
     <script>
         $(".ptcg-type").tooltip();
         $(".tooltipped").tooltip();
-        $(prettyPrint);
     </script>
     ${self.extra_scripts()}
 

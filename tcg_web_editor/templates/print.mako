@@ -277,11 +277,18 @@ flavor = print_.pokemon_flavor
 </div>
 
 <%def name="extra_scripts()">
+    <script src="${asset_url('js/prettify.js')}"></script>
     <script>
         $(function(){
             $('ul.nav.nav-tabs a').tab('show');
             $('ul.nav.nav-tabs a:first').tab('show');
+
+            if (location.hash !== '') $('a[href="' + location.hash + '"]').tab('show');
+            $('a[data-toggle="tab"]').on('shown', function(e) {
+                return location.hash = $(e.target).attr('href').substr(1);
+            });
         })
+        $(prettyPrint);
     </script>
 </%def>
 
