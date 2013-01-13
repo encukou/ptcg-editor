@@ -4,3 +4,6 @@
 .editor-field.unsaved {
     background-color: #FFDDDD;
 }
+.editor-field li a {
+    cursor: default;
+}

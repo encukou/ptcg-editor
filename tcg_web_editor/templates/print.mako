@@ -3,6 +3,8 @@
 import json
 
 from markupsafe import Markup
+
+from ptcgdex import tcg_tables
 %>
 
 <%
@@ -35,7 +37,8 @@ flavor = print_.pokemon_flavor
             <dt class="span2">Name</dt>
             <dd class="span4" data-key="name" data-type="str">${card.name}</dd>
             <dt class="span2">Card class</dt>
-            <dd class="span4">${card.class_.name}</dd>
+            <dd class="span4" data-key="class" data-type="select-one"
+                data-options="${';'.join(u'{c.name[0]}={c.name}'.format(c=c) for c in request.db.query(tcg_tables.Class))}">${card.class_.name}</dd>
         </dl>
         % if card.subclasses:
         <dl class="row-fluid">
