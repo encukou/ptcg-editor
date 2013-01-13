@@ -6,12 +6,32 @@ $.tcg_editor = function (context_name) {
         storage_listeners = [];
 
     function log() {
-        var i;
         if (window.console) {
-            for (i = 0; i < arguments.length; i += 1) {
-                window.console.log(arguments[i]);
+            foreach_array(arguments, function (thing) {
+                window.console.log(thing);
+            });
+        }
+    }
+
+    function foreach_array(array, func, filter) {
+        var i,
+            result = [];
+        if (!func) {
+            func = function (v) {
+                return v;
             }
         }
+        if (!filter) {
+            filter = function (v) {
+                return true;
+            }
+        }
+        for (i = 0; i < array.length; i += 1) {
+            if (filter(array[i])) {
+                result.push(func(array[i], i));
+            }
+        }
+        return result;
     }
 
     function have_html5_storage() {
@@ -47,9 +67,9 @@ $.tcg_editor = function (context_name) {
         } catch (e) {
             data = {};
         }
-        for (i = 0; i < storage_listeners.length; i += 1) {
+        foreach_array(storage_listeners, function (listener) {
             storage_listeners[i]();
-        }
+        });
     }
     load_from_storage();
     $(window).bind('storage', load_from_storage);
@@ -77,7 +97,7 @@ $.tcg_editor = function (context_name) {
     function prepare(options) {
         var data_key = options.key,
             orig_value = options.get();
-        function update(value) {
+        function update() {
             var value = options.get();
             if (orig_value === value) {
                 data_remove(data_key);
@@ -115,7 +135,47 @@ $.tcg_editor = function (context_name) {
         obj.on('focus blur keypress keyup click paste', update);
     });
 
-    $('dd[data-type="select-one"]').each(function () {
+    function menu_handler(event, obj, get_items) {
+        var items,
+            menu = null,
+            i;
+        obj.addClass('dropdown open');
+        function hide_menu() {
+            if (menu) {
+                menu.remove();
+                $(window.document).unbind('click', hide_menu);
+                menu = null;
+            }
+        }
+        menu = $('<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu"></ul>');
+        items = get_items(hide_menu);
+        foreach_array(items, function (item) {
+            menu.append(item);
+        });
+        obj.append(menu);
+        $(window.document).bind('click', hide_menu);
+        event.stopPropagation();
+    }
+
+    function num_from_attr(attr, deflt) {
+        if (attr === undefined) {
+            return deflt;
+        } else {
+            return +attr;
+        }
+    }
+
+    function in_array(array, thing) {
+        var i;
+        for (i = 0; i < array.length; i += 1) {
+            if (array[i] == thing) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    $('dd[data-type="select"]').each(function () {
         var obj = $(this),
             update,
             attrs,
@@ -123,53 +183,90 @@ $.tcg_editor = function (context_name) {
             i,
             options = {},
             rev_options = {},
-            hide_menu = null;
+            min,
+            max,
+            sep;
+        min = num_from_attr(obj.attr('data-min'), 0);
+        log(obj.attr('data-min'), min);
+        max = num_from_attr(obj.attr('data-max'), 0);
+        sep = obj.attr('data-separator') || "`$dummy$`";
         attrs = obj.attr('data-options').split(';');
-        for(i = 0; i < attrs.length; i += 1) {
-            val = attrs[i].split('=');
+        foreach_array(attrs, function (pair) {
+            val = pair.split('=');
             options[val[0]] = val[1];
             rev_options[val[1]] = val[0];
+        });
+        function get() {
+            return foreach_array(obj.text().split(sep), function (word) {
+                return rev_options[word];
+            }).join('');
+        }
+        function set(value) {
+            obj.text(foreach_array(value, function(letter) {
+                return options[letter];
+            }).join(sep));
         }
         update = prepare({
-            get: function () { return rev_options[obj.text()]; },
-            set: function (value) { return obj.text(options[value]); },
+            get: get,
+            set: set,
             mark_saved: function () { obj.removeClass('unsaved'); },
             mark_unsaved: function () { obj.addClass('unsaved'); },
             key: obj.attr('data-key')
         });
         obj.addClass('editor-field');
         obj.on('click', function (event) {
-            var menu,
-                item;
-            obj.addClass('dropdown open');
-            if (hide_menu) {
-                hide_menu();
-            } else {
-                menu = $('<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu"></ul>').appendTo( "body" );
-                for(i = 0; i < attrs.length; i += 1) {
-                    (function (value, text) {
-                        if (text != obj.text()) {
-                            item = $('<li><a></a></li>');
-                            item.find('a').text(text);
-                            item.click(function (event) {
-                                obj.text(text);
-                                update();
-                                hide_menu();
-                                event.stopPropagation();
-                            });
-                            menu.append(item);
-                        }
-                    }).apply(this, attrs[i].split('='));
+            var item;
+            menu_handler(event, obj, function (hide_menu) {
+                var result_a = [],
+                    result_b = [],
+                    current = get();
+                function add_item(dest, text, result_value) {
+                    item = $('<li><a></a></li>');
+                    item.find('a').text(text);
+                    item.click(function (event) {
+                        set(result_value);
+                        update();
+                        hide_menu();
+                        event.stopPropagation();
+                    });
+                    dest.push(item);
                 }
-                obj.append(menu);
-                hide_menu = function () {
-                    menu.remove()
-                    $(document).unbind('click', hide_menu);
-                    hide_menu = null;
-                };
-                $(document).bind('click', hide_menu);
-                event.stopPropagation();
-            }
+                foreach_array(attrs, function (attr) {
+                    var value = attr.split('=')[0],
+                        text = attr.split('=')[1];
+                    if (current != value) {
+                        add_item(result_a, "= " + text, value);
+                    }
+                    if (in_array(current, value)) {
+                        if (current.length > min) {
+                            add_item(
+                                result_b,
+                                "− " + text,
+                                foreach_array(
+                                    current, null, function(v) {
+                                        return v != value;
+                                    }
+                                ).join('')
+                            );
+                        }
+                    } else {
+                        if (!max || current.length < max) {
+                            add_item(result_b, "+ " + text, current + value);
+                        }
+                    }
+                });
+                if (result_a.length && result_b.length) {
+                    result_a.push($('<li class="divider"></li>'));
+                    foreach_array(result_b, function (item) {
+                        result_a.push(item);
+                    });
+                    return result_a;
+                } else if (result_a.length) {
+                    return result_a;
+                } else {
+                    return result_b;
+                }
+            });
         });
     });
 };
