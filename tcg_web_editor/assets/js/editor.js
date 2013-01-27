@@ -57,6 +57,19 @@ $.tcg_editor = function (context_name) {
         return true;
     }
 
+    var display_container = $('<div class="container"></div>');
+    display_container.append('<h2>Your unsaved edits</h2>');
+    $('#edittabs-json').append(display_container);
+    display_container.hide();
+    var display_pre = $('<pre></pre>');
+    display_pre.appendTo(display_container);
+    function show_edits() {
+        display_pre.html(prettyPrintOne(JSON.stringify(data, null, 4), null, true));
+        if (!is_empty(data)) {
+            display_container.show();
+        }
+    }
+
     function load_from_storage() {
         var i;
         try {
@@ -68,8 +81,9 @@ $.tcg_editor = function (context_name) {
             data = {};
         }
         foreach_array(storage_listeners, function (listener) {
-            storage_listeners[i]();
+            listener();
         });
+        show_edits();
     }
     load_from_storage();
     $(window).bind('storage', load_from_storage);
@@ -79,8 +93,7 @@ $.tcg_editor = function (context_name) {
         } else {
             localStorage.setItem(storage_key, JSON.stringify(data));
         }
-        $('pre.editor-json-view').text(JSON.stringify(data, null, 4));
-        log(storage_key, localStorage.getItem(storage_key));
+        show_edits();
     }
     function data_set(key, value) {
         if (data[key] !== value) {
@@ -188,7 +201,6 @@ $.tcg_editor = function (context_name) {
             max,
             sep;
         min = num_from_attr(obj.attr('data-min'), 0);
-        log(obj.attr('data-min'), min);
         max = num_from_attr(obj.attr('data-max'), 0);
         sep = obj.attr('data-separator') || "`$dummy$`";
         attrs = obj.attr('data-options').split(';');
