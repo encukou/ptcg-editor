@@ -79,6 +79,7 @@ $.tcg_editor = function (context_name) {
         } else {
             localStorage.setItem(storage_key, JSON.stringify(data));
         }
+        $('pre.editor-json-view').text(JSON.stringify(data, null, 4));
         log(storage_key, localStorage.getItem(storage_key));
     }
     function data_set(key, value) {
@@ -197,11 +198,18 @@ $.tcg_editor = function (context_name) {
             rev_options[val[1]] = val[0];
         });
         function get() {
+            var text = obj.text();
+            if (text === "&nbsp;") {
+                return [];
+            }
             return foreach_array(obj.text().split(sep), function (word) {
                 return rev_options[word];
             }).join('');
         }
         function set(value) {
+            if (value.length == 0) {
+                return "&nbsp;";
+            }
             obj.text(foreach_array(value, function(letter) {
                 return options[letter];
             }).join(sep));
@@ -234,7 +242,7 @@ $.tcg_editor = function (context_name) {
                 foreach_array(attrs, function (attr) {
                     var value = attr.split('=')[0],
                         text = attr.split('=')[1];
-                    if (current != value) {
+                    if (current != value && min) {
                         add_item(result_a, "= " + text, value);
                     }
                     if (in_array(current, value)) {
