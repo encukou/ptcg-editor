@@ -164,7 +164,7 @@ def html5_validate(output):
             params={b'out': b'gnu'},
             headers={b'Content-Type': b'text/html; charset=utf-8'},
             data=output.encode('utf-8'))
-    except ConnectionError:
+    except requests.ConnectionError:
         return '?'
     if response.text == '':
         return '✓'

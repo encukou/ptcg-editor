@@ -6,8 +6,8 @@ from ptcgdex import tcg_tables
 %>
 
 <%
-count_query = this.request.db.query(tcg_tables.Illustrator.id, func.count(tcg_tables.Print.id))
-count_query = count_query.filter(tcg_tables.Illustrator.id == tcg_tables.Print.illustrator_id)
+count_query = this.request.db.query(tcg_tables.Illustrator.id, func.count(tcg_tables.PrintIllustrator.print_id))
+count_query = count_query.filter(tcg_tables.Illustrator.id == tcg_tables.PrintIllustrator.illustrator_id)
 count_query = count_query.group_by(tcg_tables.Illustrator.id)
 print_count_by_id = {k: v for k, v in count_query}
 %>

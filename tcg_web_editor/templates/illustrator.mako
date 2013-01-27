@@ -16,7 +16,8 @@ from ptcgdex import tcg_tables
         </tr>
     </thead>
     <tbody>
-    % for print_ in this.illustrator.prints:
+    % for pi in this.illustrator.print_illustrators:
+        <% print_ = pi.print_ %>
         <tr>
             <td>${link(print_.set)}</td>
             <td>${print_.set_number}</td>

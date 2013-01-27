@@ -42,12 +42,13 @@ flavor = print_.pokemon_flavor
                 data-options="${';'.join(u'{c.name[0]}={c.name}'.format(c=c) for c in request.db.query(tcg_tables.Class))}"
                 >${card.class_.name}</dd>
         </dl>
-        % if card.subclasses:
         <dl class="row-fluid">
             <dt class="span2">${'Subclass' if len(card.subclasses) == 1 else 'Subclasses'}</dt>
-            <dd class="span10">${', '.join(sc.name for sc in card.subclasses)}</dd>
+            <dd class="span10" data-key="subclasses" data-type="select"
+                data-separator=", "
+                data-options="${';'.join(u'{c.name[0]}={c.name}'.format(c=c) for c in request.db.query(tcg_tables.Subclass))}"
+                >${', '.join(sc.name for sc in card.subclasses) or Markup('&nbsp;')}</dd>
         </dl>
-        % endif
         % if card.types or card.stage:
         <dl class="row-fluid">
             <dt class="span2">Type</dt>
@@ -174,7 +175,7 @@ flavor = print_.pokemon_flavor
         </dl>
         <dl class="row-fluid">
             <dt class="span2">Illustrator</dt>
-            <dd class="span10">${link(print_.illustrator)}</dd>
+            <dd class="span10">${Markup(', ').join(link(il) for il in print_.illustrators)}</dd>
         </dl>
 
         <h2>Sets &amp; Reprints</h2>
