@@ -212,19 +212,19 @@ $.tcg_editor = function (context_name) {
         if (search_items.length > 10) {
             searchbox = $('<input type="search">');
             menu_in.before(searchbox);
-            search = function(event) {
+            search = function (event) {
                 var term = searchbox.val().toLowerCase(),
                     matching_items = [];
-                foreach_array(search_items, function(item) {
+                foreach_array(search_items, function (item) {
                     item.removeClass('implicitly-selected');
                     if (item.attr('data-search-key').indexOf(term) !== -1) {
                         item.slideDown('fast');
-                        matching_items.push(item)
+                        matching_items.push(item);
                     } else {
                         item.slideUp('fast');
                     }
                 });
-                if (matching_items.length == 1) {
+                if (matching_items.length === 1) {
                     implicitly_selected_item = matching_items[0];
                     implicitly_selected_item.addClass('implicitly-selected');
                 } else {
@@ -236,7 +236,7 @@ $.tcg_editor = function (context_name) {
             }).on('edit', search).on('keydown', search).on('keyup', search).on('keydown', function (event) {
                 if (event.which === 13 && implicitly_selected_item) {
                     implicitly_selected_item.trigger('click');
-                };
+                }
             });
             searchbox.focus();
         }
@@ -338,8 +338,9 @@ $.tcg_editor = function (context_name) {
             appender = $('<span class="add">+</span>');
         sep = obj.attr('data-display-separator');
         options = JSON.parse(obj.attr('data-options'));
-        values = foreach_array(obj.text().split(sep), null,
-                               function (i) {return i.replace(/^\s+|\s+$/g, '')});
+        values = foreach_array(obj.text().split(sep), null, function (i) {
+            return i.replace(/^\s+|\s+$/g, '');
+        });
         obj.empty();
         obj.append(container);
         function get() {
@@ -349,9 +350,10 @@ $.tcg_editor = function (context_name) {
             values = new_values.slice(0);
             container.empty();
             foreach_array(values, function (value, i) {
-                var element = $('<span>'), separator=$('<span>');
+                var element = $('<span>'),
+                    separator = $('<span>');
                 if (i) {
-                    separator.text(sep)
+                    separator.text(sep);
                     container.append(separator);
                 }
                 element.text(value);
