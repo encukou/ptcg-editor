@@ -62,7 +62,7 @@ flavor = print_.pokemon_flavor
         % if card.retreat_cost is not None or card.hp:
         <dl class="row-fluid">
             <dt class="span2">Retreat cost</dt>
-            <dd class="span4">${card.retreat_cost}</dd>
+            <dd class="span4" data-key="retreat" data-type="int" nullable="true">${card.retreat_cost}</dd>
             <dt class="span2">HP</dt>
             <dd class="span4">${card.hp}</dd>
         </dl>

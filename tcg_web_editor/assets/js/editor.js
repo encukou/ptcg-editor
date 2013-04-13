@@ -135,8 +135,12 @@ $.tcg_editor = function (context_name) {
     function prepare(options) {
         var data_key = options.key,
             orig_value = options.get();
-        function update() {
-            var value = options.get();
+        function update(value) {
+            if (value === undefined) {
+                value = options.get();
+            } else {
+                options.set(value);
+            }
             if (JSON.stringify(orig_value) === JSON.stringify(value)) {
                 data_remove(data_key);
                 options.mark_saved();
@@ -170,7 +174,9 @@ $.tcg_editor = function (context_name) {
         });
         obj.addClass('editor-field');
         obj.attr('contentEditable', true);
-        obj.on('focus blur keypress keyup click paste', update);
+        obj.on('focus blur keypress keyup click paste', function () {
+            update();
+        });
     });
 
     function hide_menu() {
@@ -317,8 +323,7 @@ $.tcg_editor = function (context_name) {
                 foreach_obj(options, function (value, text) {
                     if (current !== value && (current || value)) {
                         result.push(make_menu_item(text, function () {
-                            set(value);
-                            update();
+                            update(value);
                         }));
                     }
                 });
@@ -335,7 +340,7 @@ $.tcg_editor = function (context_name) {
             values,
             sep,
             container = $('<span>'),
-            appender = $('<span class="add">+</span>');
+            appender = $('<span class="action-button">+</span>');
         sep = obj.attr('data-display-separator');
         options = JSON.parse(obj.attr('data-options'));
         values = foreach_array(obj.text().split(sep), null, function (i) {
@@ -364,8 +369,7 @@ $.tcg_editor = function (context_name) {
                         foreach_array(options, function (option) {
                             result.push(make_menu_item(option, function () {
                                 values[i] = option;
-                                set(values);
-                                update();
+                                update(values);
                             }, option.toLowerCase()));
                         }, function (option) {
                             return option !== value;
@@ -373,8 +377,7 @@ $.tcg_editor = function (context_name) {
                         result.push('<li class="divider"></li>');
                         result.push(make_menu_item('Remove ' + value, function () {
                             values.splice(i, 1);
-                            set(values);
-                            update();
+                            update(values);
                         }));
                         return result;
                     });
@@ -389,8 +392,7 @@ $.tcg_editor = function (context_name) {
                 foreach_array(options, function (option) {
                     result.push(make_menu_item(option, function () {
                         values.push(option);
-                        set(values);
-                        update();
+                        update(values);
                     }, option.toLowerCase()));
                 });
                 return result;
@@ -403,5 +405,85 @@ $.tcg_editor = function (context_name) {
             mark_unsaved: function () { obj.addClass('unsaved'); },
             key: obj.attr('data-key')
         });
+    });
+
+    $('dd[data-type="int"]').each(function () {
+        var obj = $(this),
+            container = $('<span class="the-value"></span>'),
+            orig_value,
+            update,
+            start_y,
+            start_value,
+            moving = false,
+            slider_container;
+        orig_value = parseInt(obj.text(), 10);
+        obj.empty();
+        obj.append(container);
+        container.text(orig_value);
+        function get() {
+            var text = container.text();
+            if (text === 'N/A') {
+                return null;
+            }
+            return parseInt(container.text(), 10);
+        }
+        function set(value) {
+            if (value === null) {
+                container.text('N/A');
+            } else {
+                container.text(value);
+            }
+        }
+        obj.addClass('editor-field');
+        update = prepare({
+            get: get,
+            set: set,
+            mark_saved: function () { obj.removeClass('unsaved'); },
+            mark_unsaved: function () { obj.addClass('unsaved'); },
+            key: obj.attr('data-key')
+        });
+
+        obj.append($('<span class="action-button">▾</span>').on('click', function () {
+            var value = get();
+            if (value === null) {
+                value = orig_value;
+            }
+            update(value - 1);
+        }));
+        obj.append($('<span class="action-button slider">⇅</span>').draggable({
+            axis: "y",
+            start: function (event) {
+                obj.addClass('shown');
+                start_y = event.pageY;
+                start_value = get();
+                if (start_value === null) {
+                    start_value = orig_value;
+                }
+                $(this).css('cursor', '-moz-grabbing')
+            },
+            drag: function (event) {
+                update(parseInt(start_value + (start_y - event.pageY) / 10, 10));
+            },
+            stop: function () {
+                obj.removeClass('shown');
+                $(this).css('cursor', '-moz-grab')
+            },
+            revert: true,
+            revertDuration: 0,
+            distance: 0,
+            delay: 0
+        }).css('cursor', '-moz-grab'));
+        obj.append($('<span class="action-button">▴</span>').on('click', function () {
+            var value = get();
+            if (value === null) {
+                value = orig_value;
+            }
+            update(value + 1);
+        }));
+        if (obj.attr('nullable')) {
+            obj.append($('<span class="action-button">×</span>').on('click', function () {
+                update(null);
+            }));
+        }
     });
 };

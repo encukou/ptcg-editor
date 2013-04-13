@@ -69,6 +69,7 @@
 
     <script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
     <script src="${asset_url('js/bootstrap.js')}"></script>
+    <script src="${asset_url('js/jquery-ui-1.10.2.custom.min.js')}"></script>
     <script>
         $(".ptcg-type").tooltip();
         $(".tooltipped").tooltip();
