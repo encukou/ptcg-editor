@@ -137,7 +137,7 @@ $.tcg_editor = function (context_name) {
             orig_value = options.get();
         function update() {
             var value = options.get();
-            if (orig_value === value) {
+            if (JSON.stringify(orig_value) === JSON.stringify(value)) {
                 data_remove(data_key);
                 options.mark_saved();
             } else {
@@ -181,7 +181,7 @@ $.tcg_editor = function (context_name) {
     }
     $(window.document).bind('click', hide_menu);
 
-    function menu_handler(event, obj, get_items) {
+    function popup_menu(event, obj, get_items) {
         var items,
             menu;
         hide_menu();
@@ -194,6 +194,17 @@ $.tcg_editor = function (context_name) {
         obj.append(menu);
         currently_displayed_menu = menu;
         event.stopPropagation();
+    }
+    function make_menu_item(text, onclick) {
+        var item;
+        item = $('<li><a></a></li>');
+        item.find('a').text(text);
+        item.click(function (event) {
+            onclick();
+            hide_menu();
+            event.stopPropagation();
+        });
+        return item;
     }
 
     function num_from_attr(attr, deflt) {
@@ -250,28 +261,94 @@ $.tcg_editor = function (context_name) {
         });
         obj.addClass('editor-field');
         obj.on('click', function (event) {
-            menu_handler(event, obj, function () {
+            popup_menu(event, obj, function () {
                 var result = [],
                     current = get(),
                     item;
-                function add_item(dest, text, result_value) {
-                    item = $('<li><a></a></li>');
-                    item.find('a').text(text);
-                    item.click(function (event) {
-                        set(result_value);
-                        update();
-                        hide_menu();
-                        event.stopPropagation();
-                    });
-                    dest.push(item);
-                }
                 foreach_obj(options, function (value, text) {
                     if (current !== value && (current || value)) {
-                        add_item(result, text, value);
+                        result.push(make_menu_item(text, function () {
+                            set(value);
+                            update();
+                        }));
                     }
                 });
                 return result;
             });
+        });
+    });
+
+    $('dd[data-type="tags"]').each(function () {
+        var obj = $(this),
+            update,
+            attrs,
+            options,
+            values,
+            sep,
+            container = $('<span>'),
+            appender = $('<span class="add">+</span>');
+        sep = obj.attr('data-display-separator');
+        options = JSON.parse(obj.attr('data-options'));
+        values = obj.text().split(sep);
+        obj.empty();
+        obj.append(container);
+        function get() {
+            return values.slice(0);
+        }
+        function set(new_values) {
+            values = new_values;
+            container.empty();
+            foreach_array(values, function (value, i) {
+                var element = $('<span>');
+                if (i) {
+                    container.append('<span>/</span>');
+                }
+                element.text(value);
+                container.append(element);
+                element.on('click', function (event) {
+                    popup_menu(event, obj, function () {
+                        var result = [];
+                        foreach_array(options, function (option) {
+                            result.push(make_menu_item(option, function () {
+                                values[i] = option;
+                                set(values);
+                                update();
+                            }));
+                        }, function (option) {
+                            return option !== value;
+                        });
+                        result.push('<li class="divider"><li>');
+                        result.push(make_menu_item('Remove ' + value, function () {
+                            values.splice(i, 1);
+                            set(values);
+                            update();
+                        }));
+                        return result;
+                    });
+                });
+            });
+        }
+        obj.addClass('editor-field');
+        obj.append(appender);
+        appender.on('click', function (event) {
+            popup_menu(event, obj, function () {
+                var result = [];
+                foreach_array(options, function (option) {
+                    result.push(make_menu_item(option, function () {
+                        values.push(option);
+                        set(values);
+                        update();
+                    }));
+                });
+                return result;
+            });
+        });
+        update = prepare({
+            get: get,
+            set: set,
+            mark_saved: function () { obj.removeClass('unsaved'); },
+            mark_unsaved: function () { obj.addClass('unsaved'); },
+            key: obj.attr('data-key')
         });
     });
 };

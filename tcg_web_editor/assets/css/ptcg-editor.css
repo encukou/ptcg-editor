@@ -120,6 +120,23 @@ table.diff-table td.different .d {
     font-weight: bold;
 }
 
-dd[data-type=enum] {
+dd[data-type=enum],
+dd[data-type=tags] {
     cursor: default;
+}
+
+dd[data-type=tags] .add {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-left: 1ex;
+    border-radius: 0.4em;
+    text-align: center;
+    line-height: 0.8em;
+    background-color: rgb(0, 136, 204);
+    color: white;
+    visibility: hidden;
+}
+dd[data-type=tags]:hover .add {
+    visibility: visible;
 }
