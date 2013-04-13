@@ -64,7 +64,7 @@ flavor = print_.pokemon_flavor
             <dt class="span2">Retreat cost</dt>
             <dd class="span4" data-key="retreat" data-type="int" nullable="true">${card.retreat_cost}</dd>
             <dt class="span2">HP</dt>
-            <dd class="span4" data-key="retreat" data-type="int" nullable="true" data-step="10">${card.hp}</dd>
+            <dd class="span4" data-key="hp" data-type="int" nullable="true" data-step="10">${card.hp}</dd>
         </dl>
         % endif
 

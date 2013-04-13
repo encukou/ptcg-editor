@@ -193,7 +193,6 @@ $.tcg_editor = function (context_name) {
             menu,
             menu_in,
             searchbox,
-            search,
             implicitly_selected_item = null;
         hide_menu();
         obj.addClass('dropdown open');
@@ -218,7 +217,9 @@ $.tcg_editor = function (context_name) {
         if (search_items.length > 10) {
             searchbox = $('<input type="search">');
             menu_in.before(searchbox);
-            search = function (event) {
+            searchbox.on('click', function (event) {
+                event.stopPropagation();
+            }).on('edit keydown keyup', function (event) {
                 var term = searchbox.val().toLowerCase(),
                     matching_items = [];
                 foreach_array(search_items, function (item) {
@@ -236,10 +237,7 @@ $.tcg_editor = function (context_name) {
                 } else {
                     implicitly_selected_item = null;
                 }
-            };
-            searchbox.on('click', function (event) {
-                event.stopPropagation();
-            }).on('edit', search).on('keydown', search).on('keyup', search).on('keydown', function (event) {
+            }).on('keydown', function (event) {
                 if (event.which === 13 && implicitly_selected_item) {
                     implicitly_selected_item.trigger('click');
                 }
@@ -422,11 +420,14 @@ $.tcg_editor = function (context_name) {
         obj.append(container);
         container.text(orig_value);
         function get() {
-            var text = container.text();
-            if (text === 'N/A') {
-                return null;
+            var text = container.text(),
+                value;
+            value = parseInt(container.text(), 10);
+            console.log(value, typeof value);
+            if (typeof value === 'number' && !isNaN(value)) {
+                return Math.round(value / step, 10) * step;
             }
-            return parseInt(container.text(), 10);
+            return null;
         }
         function get_number() {
             var value = get();
@@ -436,10 +437,18 @@ $.tcg_editor = function (context_name) {
             return value;
         }
         function set(value) {
+            var target;
             if (value === null) {
-                container.text('N/A');
+                if (container.is(":focus")) {
+                    target = '';
+                } else {
+                    target = 'N/A';
+                }
             } else {
-                container.text(value);
+                target = "" + value;
+            }
+            if (target !== container.text()) {
+                container.text(target);
             }
         }
         obj.addClass('editor-field');
@@ -449,6 +458,11 @@ $.tcg_editor = function (context_name) {
             mark_saved: function () { obj.removeClass('unsaved'); },
             mark_unsaved: function () { obj.addClass('unsaved'); },
             key: obj.attr('data-key')
+        });
+
+        container.attr('contentEditable', true);
+        container.on('focus blur click paste', function () {
+            update(get());
         });
 
         obj.append($('<span class="action-button">▾</span>').on('click', function () {
