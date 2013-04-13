@@ -7,7 +7,8 @@ $.tcg_editor = function (context_name) {
         data,
         storage_listeners = [],
         display_container,
-        display_pre;
+        display_pre,
+        currently_displayed_menu;
 
     function foreach_array(array, func, filter) {
         var i,
@@ -172,25 +173,26 @@ $.tcg_editor = function (context_name) {
         obj.on('focus blur keypress keyup click paste', update);
     });
 
+    function hide_menu() {
+        if (currently_displayed_menu) {
+            currently_displayed_menu.remove();
+            currently_displayed_menu = null;
+        }
+    }
+    $(window.document).bind('click', hide_menu);
+
     function menu_handler(event, obj, get_items) {
         var items,
-            menu = null,
-            i;
+            menu;
+        hide_menu();
         obj.addClass('dropdown open');
-        function hide_menu() {
-            if (menu) {
-                menu.remove();
-                $(window.document).unbind('click', hide_menu);
-                menu = null;
-            }
-        }
         menu = $('<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu"></ul>');
-        items = get_items(hide_menu);
+        items = get_items();
         foreach_array(items, function (item) {
             menu.append(item);
         });
         obj.append(menu);
-        $(window.document).bind('click', hide_menu);
+        currently_displayed_menu = menu;
         event.stopPropagation();
     }
 
@@ -248,7 +250,7 @@ $.tcg_editor = function (context_name) {
         });
         obj.addClass('editor-field');
         obj.on('click', function (event) {
-            menu_handler(event, obj, function (hide_menu) {
+            menu_handler(event, obj, function () {
                 var result = [],
                     current = get(),
                     item;
