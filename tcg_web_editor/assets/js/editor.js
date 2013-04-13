@@ -415,7 +415,8 @@ $.tcg_editor = function (context_name) {
             start_y,
             start_value,
             moving = false,
-            slider_container;
+            slider_container,
+            step = parseInt(obj.attr('data-step'), 10) || 1;
         orig_value = parseInt(obj.text(), 10);
         obj.empty();
         obj.append(container);
@@ -426,6 +427,13 @@ $.tcg_editor = function (context_name) {
                 return null;
             }
             return parseInt(container.text(), 10);
+        }
+        function get_number() {
+            var value = get();
+            if (value === null) {
+                return orig_value;
+            }
+            return value;
         }
         function set(value) {
             if (value === null) {
@@ -444,25 +452,18 @@ $.tcg_editor = function (context_name) {
         });
 
         obj.append($('<span class="action-button">▾</span>').on('click', function () {
-            var value = get();
-            if (value === null) {
-                value = orig_value;
-            }
-            update(value - 1);
+            update(get_number() - step);
         }));
         obj.append($('<span class="action-button slider">⇅</span>').draggable({
             axis: "y",
             start: function (event) {
                 obj.addClass('shown');
                 start_y = event.pageY;
-                start_value = get();
-                if (start_value === null) {
-                    start_value = orig_value;
-                }
+                start_value = get_number();
                 $(this).css('cursor', '-moz-grabbing')
             },
             drag: function (event) {
-                update(parseInt(start_value + (start_y - event.pageY) / 10, 10));
+                update(parseInt(start_value / step + (start_y - event.pageY) / 10, 10) * step);
             },
             stop: function () {
                 obj.removeClass('shown');
@@ -474,11 +475,7 @@ $.tcg_editor = function (context_name) {
             delay: 0
         }).css('cursor', '-moz-grab'));
         obj.append($('<span class="action-button">▴</span>').on('click', function () {
-            var value = get();
-            if (value === null) {
-                value = orig_value;
-            }
-            update(value + 1);
+            update(get_number() + step);
         }));
         if (obj.attr('nullable')) {
             obj.append($('<span class="action-button">×</span>').on('click', function () {

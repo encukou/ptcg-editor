@@ -41,6 +41,9 @@ dd[data-type]:hover .action-button {
     border-color: transparent;
     color: white;
 }
+dd[data-type] .action-button.slider {
+    cursor: row-resize;
+}
 
 dd[data-type=int] .the-value {
     display: inline-block;
