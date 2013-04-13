@@ -140,3 +140,20 @@ dd[data-type=tags] .add {
 dd[data-type=tags]:hover .add {
     visibility: visible;
 }
+
+.dropdown-menu input[type=search] {
+    display: block;
+    margin-left: 1ex;
+    margin-right: 1ex;
+}
+.dropdown-menu-in {
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+.dropdown-menu-in .implicitly-selected {
+    background-color: rgb(217, 237, 247);
+}

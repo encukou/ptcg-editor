@@ -43,9 +43,9 @@ flavor = print_.pokemon_flavor
         </dl>
         <dl class="row-fluid">
             <dt class="span2">${'Subclass' if len(card.subclasses) == 1 else 'Subclasses'}</dt>
-            <dd class="span10" data-key="subclasses" data-type="select"
-                data-separator=", "
-                data-options="${';'.join(u'{c.name[0]}={c.name}'.format(c=c) for c in request.db.query(tcg_tables.Subclass))}"
+            <dd class="span10" data-key="subclasses" data-type="tags"
+                data-display-separator=", "
+                data-options="${json.dumps([c.name for c in request.db.query(tcg_tables.Subclass)])}"
                 >${', '.join(sc.name for sc in card.subclasses) or Markup('&nbsp;')}</dd>
         </dl>
         % if card.types or card.stage:
@@ -58,7 +58,7 @@ flavor = print_.pokemon_flavor
             % if card.stage:
             <dt class="span2">Stage</dt>
             <dd class="span4" data-key="stage" data-type="enum"
-                data-options="${json.dumps([('', u'---')] + [(c.name, c.name) for c in request.db.query(tcg_tables.Stage)])}"
+                data-options="${json.dumps([('', u'N/A')] + [(c.name, c.name) for c in request.db.query(tcg_tables.Stage)])}"
                 >${card.stage.name}</dd>
             % endif
         </dl>

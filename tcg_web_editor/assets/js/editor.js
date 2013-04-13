@@ -183,19 +183,65 @@ $.tcg_editor = function (context_name) {
 
     function popup_menu(event, obj, get_items) {
         var items,
-            menu;
+            search_items = [],
+            menu,
+            menu_in,
+            searchbox,
+            search,
+            implicitly_selected_item = null;
         hide_menu();
         obj.addClass('dropdown open');
-        menu = $('<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu"></ul>');
+        menu = $('<div class="dropdown-menu"></div>');
+        menu_in = $('<ul class="dropdown-menu-in" role="menu" aria-labelledby="dropdownMenu"></ul>');
+        menu_in.css('max-height', '20em');
+        menu.append(menu_in);
         items = get_items();
         foreach_array(items, function (item) {
-            menu.append(item);
+            item = $(item);
+            if (item.attr('data-search-key')) {
+                menu_in.append(item);
+                search_items.push(item);
+            } else {
+                menu.append(item);
+            }
         });
         obj.append(menu);
         currently_displayed_menu = menu;
         event.stopPropagation();
+
+        if (search_items.length > 10) {
+            searchbox = $('<input type="search">');
+            menu_in.before(searchbox);
+            search = function(event) {
+                var term = searchbox.val().toLowerCase(),
+                    matching_items = [];
+                foreach_array(search_items, function(item) {
+                    item.removeClass('implicitly-selected');
+                    if (item.attr('data-search-key').indexOf(term) !== -1) {
+                        item.slideDown('fast');
+                        matching_items.push(item)
+                    } else {
+                        item.slideUp('fast');
+                    }
+                });
+                if (matching_items.length == 1) {
+                    implicitly_selected_item = matching_items[0];
+                    implicitly_selected_item.addClass('implicitly-selected');
+                } else {
+                    implicitly_selected_item = null;
+                }
+            };
+            searchbox.on('click', function (event) {
+                event.stopPropagation();
+            }).on('edit', search).on('keydown', search).on('keyup', search).on('keydown', function (event) {
+                if (event.which === 13 && implicitly_selected_item) {
+                    implicitly_selected_item.trigger('click');
+                };
+            });
+            searchbox.focus();
+        }
     }
-    function make_menu_item(text, onclick) {
+    function make_menu_item(text, onclick, search_key) {
         var item;
         item = $('<li><a></a></li>');
         item.find('a').text(text);
@@ -204,6 +250,9 @@ $.tcg_editor = function (context_name) {
             hide_menu();
             event.stopPropagation();
         });
+        if (search_key) {
+            item.attr('data-search-key', search_key);
+        }
         return item;
     }
 
@@ -293,15 +342,16 @@ $.tcg_editor = function (context_name) {
         obj.empty();
         obj.append(container);
         function get() {
-            return values.slice(0);
+            return values;
         }
         function set(new_values) {
-            values = new_values;
+            values = new_values.slice(0);
             container.empty();
             foreach_array(values, function (value, i) {
-                var element = $('<span>');
+                var element = $('<span>'), separator=$('<span>');
                 if (i) {
-                    container.append('<span>/</span>');
+                    separator.text(sep)
+                    container.append(separator);
                 }
                 element.text(value);
                 container.append(element);
@@ -313,11 +363,11 @@ $.tcg_editor = function (context_name) {
                                 values[i] = option;
                                 set(values);
                                 update();
-                            }));
+                            }, option.toLowerCase()));
                         }, function (option) {
                             return option !== value;
                         });
-                        result.push('<li class="divider"><li>');
+                        result.push('<li class="divider"></li>');
                         result.push(make_menu_item('Remove ' + value, function () {
                             values.splice(i, 1);
                             set(values);
@@ -338,7 +388,7 @@ $.tcg_editor = function (context_name) {
                         values.push(option);
                         set(values);
                         update();
-                    }));
+                    }, option.toLowerCase()));
                 });
                 return result;
             });
