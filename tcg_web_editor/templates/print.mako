@@ -302,7 +302,12 @@ flavor = print_.pokemon_flavor
 
             if (location.hash !== '') $('a[href="' + location.hash + '"]').tab('show');
             $('a[data-toggle="tab"]').on('shown', function(e) {
-                return location.hash = $(e.target).attr('href').substr(1);
+                var hash = $(e.target).attr('href').substr(1)
+                var node = $( '#' + hash );
+                node.attr('id', '');  // Don't scroll when changing tabs
+                location.hash = hash;
+                node.attr('id', hash);  // Enable the ID again
+                return true;
             });
         })
         $(prettyPrint);
