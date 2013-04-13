@@ -48,21 +48,17 @@ flavor = print_.pokemon_flavor
                 data-options="${json.dumps([c.name for c in request.db.query(tcg_tables.Subclass)])}"
                 >${', '.join(sc.name for sc in card.subclasses) or Markup('&nbsp;')}</dd>
         </dl>
-        % if card.types or card.stage:
         <dl class="row-fluid">
             <dt class="span2">Type</dt>
             <dd class="span4" data-key="types" data-type="tags"
                 data-display-separator="/"
                 data-options="${json.dumps([c.name for c in request.db.query(tcg_tables.TCGType)])}"
                 >${'/'.join(t.name for t in card.types) or Markup('&nbsp;')}</dd>
-            % if card.stage:
             <dt class="span2">Stage</dt>
             <dd class="span4" data-key="stage" data-type="enum"
                 data-options="${json.dumps([('', u'N/A')] + [(c.name, c.name) for c in request.db.query(tcg_tables.Stage)])}"
-                >${card.stage.name}</dd>
-            % endif
+                >${card.stage.name if card.stage else 'N/A'}</dd>
         </dl>
-        % endif
         % if card.retreat_cost is not None or card.hp:
         <dl class="row-fluid">
             <dt class="span2">Retreat cost</dt>

@@ -338,7 +338,8 @@ $.tcg_editor = function (context_name) {
             appender = $('<span class="add">+</span>');
         sep = obj.attr('data-display-separator');
         options = JSON.parse(obj.attr('data-options'));
-        values = obj.text().split(sep);
+        values = foreach_array(obj.text().split(sep), null,
+                               function (i) {return i.replace(/^\s+|\s+$/g, '')});
         obj.empty();
         obj.append(container);
         function get() {
