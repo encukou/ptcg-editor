@@ -119,3 +119,7 @@ table.diff-table td.different.d,
 table.diff-table td.different .d {
     font-weight: bold;
 }
+
+dd[data-type=enum] {
+    cursor: default;
+}

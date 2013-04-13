@@ -1,17 +1,13 @@
+/*global prettyPrintOne */
+
 $.tcg_editor = function (context_name) {
     "use strict";
     var localStorage,
         storage_key = "edit_" + context_name,
         data,
-        storage_listeners = [];
-
-    function log() {
-        if (window.console) {
-            foreach_array(arguments, function (thing) {
-                window.console.log(thing);
-            });
-        }
-    }
+        storage_listeners = [],
+        display_container,
+        display_pre;
 
     function foreach_array(array, func, filter) {
         var i,
@@ -19,12 +15,12 @@ $.tcg_editor = function (context_name) {
         if (!func) {
             func = function (v) {
                 return v;
-            }
+            };
         }
         if (!filter) {
             filter = function (v) {
                 return true;
-            }
+            };
         }
         for (i = 0; i < array.length; i += 1) {
             if (filter(array[i])) {
@@ -32,6 +28,33 @@ $.tcg_editor = function (context_name) {
             }
         }
         return result;
+    }
+
+    function foreach_obj(obj, func, filter) {
+        var name;
+        if (!func) {
+            func = function (v) {
+                return v;
+            };
+        }
+        if (!filter) {
+            filter = function (v) {
+                return true;
+            };
+        }
+        for (name in obj) {
+            if (obj.hasOwnProperty(name) && filter(name, obj[name])) {
+                func(name, obj[name]);
+            }
+        }
+    }
+
+    function log() {
+        if (window.console) {
+            foreach_array(arguments, function (thing) {
+                window.console.log(thing);
+            });
+        }
     }
 
     function have_html5_storage() {
@@ -57,11 +80,11 @@ $.tcg_editor = function (context_name) {
         return true;
     }
 
-    var display_container = $('<div class="container"></div>');
+    display_container = $('<div class="container"></div>');
     display_container.append('<h2>Your unsaved edits</h2>');
     $('#edittabs-json').append(display_container);
     display_container.hide();
-    var display_pre = $('<pre></pre>');
+    display_pre = $('<pre></pre>');
     display_pre.appendTo(display_container);
     function show_edits() {
         display_pre.html(prettyPrintOne(JSON.stringify(data, null, 4), null, true));
@@ -174,57 +197,47 @@ $.tcg_editor = function (context_name) {
     function num_from_attr(attr, deflt) {
         if (attr === undefined) {
             return deflt;
-        } else {
-            return +attr;
         }
+        return +attr;
     }
 
     function in_array(array, thing) {
         var i;
         for (i = 0; i < array.length; i += 1) {
-            if (array[i] == thing) {
+            if (array[i] === thing) {
                 return true;
             }
         }
         return false;
     }
 
-    $('dd[data-type="select"]').each(function () {
+    $('dd[data-type="enum"]').each(function () {
         var obj = $(this),
             update,
             attrs,
             val,
-            i,
             options = {},
-            rev_options = {},
-            min,
-            max,
-            sep;
-        min = num_from_attr(obj.attr('data-min'), 0);
-        max = num_from_attr(obj.attr('data-max'), 0);
-        sep = obj.attr('data-separator') || "`$dummy$`";
-        attrs = obj.attr('data-options').split(';');
-        foreach_array(attrs, function (pair) {
-            val = pair.split('=');
-            options[val[0]] = val[1];
-            rev_options[val[1]] = val[0];
+            rev_options = {};
+        attrs = JSON.parse(obj.attr('data-options'));
+        foreach_array(attrs, function (item) {
+            var value = item[0],
+                text = item[1];
+            options[value] = text;
+            rev_options[text] = value;
         });
         function get() {
-            var text = obj.text();
-            if (text === "&nbsp;") {
-                return [];
+            var rv = rev_options[obj.text()];
+            if (!rv) {
+                return null;
             }
-            return foreach_array(obj.text().split(sep), function (word) {
-                return rev_options[word];
-            }).join('');
+            return rv;
         }
         function set(value) {
-            if (value.length == 0) {
-                return "&nbsp;";
+            if (!options[value]) {
+                obj.text();
+            } else {
+                obj.text(options[value]);
             }
-            obj.text(foreach_array(value, function(letter) {
-                return options[letter];
-            }).join(sep));
         }
         update = prepare({
             get: get,
@@ -235,11 +248,10 @@ $.tcg_editor = function (context_name) {
         });
         obj.addClass('editor-field');
         obj.on('click', function (event) {
-            var item;
             menu_handler(event, obj, function (hide_menu) {
-                var result_a = [],
-                    result_b = [],
-                    current = get();
+                var result = [],
+                    current = get(),
+                    item;
                 function add_item(dest, text, result_value) {
                     item = $('<li><a></a></li>');
                     item.find('a').text(text);
@@ -251,41 +263,12 @@ $.tcg_editor = function (context_name) {
                     });
                     dest.push(item);
                 }
-                foreach_array(attrs, function (attr) {
-                    var value = attr.split('=')[0],
-                        text = attr.split('=')[1];
-                    if (current != value && min) {
-                        add_item(result_a, "= " + text, value);
-                    }
-                    if (in_array(current, value)) {
-                        if (current.length > min) {
-                            add_item(
-                                result_b,
-                                "− " + text,
-                                foreach_array(
-                                    current, null, function(v) {
-                                        return v != value;
-                                    }
-                                ).join('')
-                            );
-                        }
-                    } else {
-                        if (!max || current.length < max) {
-                            add_item(result_b, "+ " + text, current + value);
-                        }
+                foreach_obj(options, function (value, text) {
+                    if (current !== value && (current || value)) {
+                        add_item(result, text, value);
                     }
                 });
-                if (result_a.length && result_b.length) {
-                    result_a.push($('<li class="divider"></li>'));
-                    foreach_array(result_b, function (item) {
-                        result_a.push(item);
-                    });
-                    return result_a;
-                } else if (result_a.length) {
-                    return result_a;
-                } else {
-                    return result_b;
-                }
+                return result;
             });
         });
     });
