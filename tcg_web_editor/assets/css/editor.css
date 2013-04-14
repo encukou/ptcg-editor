@@ -9,17 +9,17 @@
 }
 
 
-dd[data-type=enum],
-dd[data-type=tags],
-dd[data-type=int] {
+*[data-tcg-enum],
+*[data-tcg-tags],
+*[data-tcg-int] {
     cursor: default;
 }
 
-dd[data-type=int] *[contentEditable] {
+*[data-tcg-int] *[contentEditable] {
     cursor: text;
 }
 
-dd[data-type] .action-button {
+.action-button {
     display: inline-block;
     width: 1em;
     height: 1em;
@@ -38,18 +38,18 @@ dd[data-type] .action-button {
     -moz-user-select: none;
     -ms-user-select: none;
 }
-dd[data-type].shown .action-button,
-dd[data-type]:hover .action-button {
+*[data-tcg-show-modified].shown .action-button,
+*[data-tcg-show-modified]:hover .action-button {
     visibility: visible;
     background-color: rgb(0, 136, 204);
     border-color: transparent;
     color: white;
 }
-dd[data-type] .action-button.slider {
+.action-button.slider {
     cursor: row-resize;
 }
 
-dd[data-type=int] .the-value {
+*[data-tcg-int] .the-value {
     display: inline-block;
     min-width: 2em;
 }

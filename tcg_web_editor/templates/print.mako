@@ -35,27 +35,27 @@ flavor = print_.pokemon_flavor
 
         <dl class="row-fluid">
             <dt class="span2">Name</dt>
-            <dd class="span4" data-tcg-str="card.name" tcg-show-modified="name">${card.name}d</dd>
+            <dd class="span4" data-tcg-str="card.name" data-tcg-show-modified="name">${card.name}</dd>
             <dt class="span2">Card class</dt>
-            <dd class="span4" data-tcg-enum="card.class" tcg-show-modified="class"
+            <dd class="span4" data-tcg-enum="card.class" data-tcg-show-modified="class"
                 data-options="${json.dumps([(c.name[0], c.name) for c in request.db.query(tcg_tables.Class)])}"
                 >${card.class_.name}</dd>
         </dl>
         <dl class="row-fluid">
             <dt class="span2">${'Subclass' if len(card.subclasses) == 1 else 'Subclasses'}</dt>
-            <dd class="span10" data-key="subclasses" data-type="tags"
+            <dd class="span10" data-tcg-tags="card.subclasses" data-tcg-show-modified="subclasses"
                 data-display-separator=", "
-                data-options="${json.dumps([c.name for c in request.db.query(tcg_tables.Subclass)])}"
+                data-options="${json.dumps([(c.name, c.name) for c in request.db.query(tcg_tables.Subclass)])}"
                 >${', '.join(sc.name for sc in card.subclasses) or Markup('&nbsp;')}</dd>
         </dl>
         <dl class="row-fluid">
             <dt class="span2">Type</dt>
-            <dd class="span4" data-key="types" data-type="tags"
+            <dd class="span4" data-tcg-tags="card.types" data-tcg-show-modified="types"
                 data-display-separator="/"
-                data-options="${json.dumps([c.name for c in request.db.query(tcg_tables.TCGType)])}"
+                data-options="${json.dumps([(c.name, c.name) for c in request.db.query(tcg_tables.TCGType)])}"
                 >${'/'.join(t.name for t in card.types) or Markup('&nbsp;')}</dd>
             <dt class="span2">Stage</dt>
-            <dd class="span4" data-tcg-enum="card.stage" tcg-show-modified="stage"
+            <dd class="span4" data-tcg-enum="card.stage" data-tcg-show-modified="stage"
                 data-options="${json.dumps([('', u'N/A')] + [(c.name, c.name) for c in request.db.query(tcg_tables.Stage)])}"
                 >${card.stage.name if card.stage else 'N/A'}</dd>
         </dl>

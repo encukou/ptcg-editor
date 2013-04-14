@@ -132,119 +132,177 @@ $.tcg_editor = function (context_name, orig_data) {
         return item;
     }
 
-    angular.module('tcg', [])
-        .controller('tcgCardCtrl', function ($scope) {
-            var card = {},
-                orig_card = {};
-            $scope.card = card;
-            $scope.orig_card = orig_card;
-            foreach_obj(orig_data, function (key, value) {
-                card[key] = value;
-                orig_card[key] = value;
+    angular.module('tcg', []);
+
+    angular.module('tcg').controller('tcgCardCtrl', function ($scope) {
+        var card = {},
+            orig_card = {};
+        $scope.card = card;
+        $scope.orig_card = orig_card;
+        foreach_obj(orig_data, function (key, value) {
+            card[key] = value;
+            orig_card[key] = JSON.parse(JSON.stringify(value));
+        });
+    });
+
+    angular.module('tcg').directive('tcgStr', function () {
+        return function (scope, element, attrs) {
+            element = $(element);
+            element.attr('contentEditable', true);
+            scope.$watch(attrs.tcgStr, function (value) {
+                if (element.text() !== value) {
+                    element.text(value);
+                }
             });
-        })
-        .directive('tcgStr', function () {
-            return function (scope, element, attrs) {
-                element = $(element);
-                element.attr('contentEditable', true);
-                scope.$watch(attrs.tcgStr, function (value) {
-                    if (element.text() !== value) {
-                        element.text(value);
+            element.on('focus blur keypress keyup click paste', function () {
+                scope.$apply(attrs.tcgStr + '=' + JSON.stringify(element.text()));
+            });
+        };
+    });
+
+    angular.module('tcg').directive('tcgEnum', function () {
+        return function (scope, element, attrs) {
+            var sorted_options = JSON.parse(attrs.options),
+                options = {};
+            element = $(element);
+            foreach_array(sorted_options, function (value) {
+                options[value[0]] = value[1];
+            });
+            scope.$watch(attrs.tcgEnum, function (value) {
+                if (value === null) {
+                    value = '';
+                }
+                if (options.hasOwnProperty(value)) {
+                    element.text(options[value]);
+                } else {
+                    element.text(value);
+                }
+            });
+            element.on('click', function (event) {
+                popup_menu(event, element, function () {
+                    var result = [],
+                        current = scope.$eval(attrs.tcgEnum);
+                    foreach_array(sorted_options, function (value_text) {
+                        var item,
+                            value = value_text[0],
+                            text = value_text[1];
+                        if (!value) {
+                            value = null;
+                        }
+                        item = make_menu_item(text, function () {
+                            scope.$apply(attrs.tcgEnum + '=' + JSON.stringify(value));
+                        }, text.toLowerCase());
+                        result.push(item);
+                        if (current === value || (!current && !value)) {
+                            item.addClass('disabled');
+                        }
+                    });
+                    if (attrs.tcgEnumRemove) {
+                        result.push('<li class="divider"></li>');
+                        result.push(make_menu_item('Remove ' + current, function () {
+                            scope.$apply(attrs.tcgEnumRemove);
+                        }));
                     }
+                    return result;
                 });
-                element.on('focus blur keypress keyup click paste', function () {
-                    scope.$apply(attrs.tcgStr + '=' + JSON.stringify(element.text()));
-                });
-            };
-        })
-        .directive('tcgEnum', function () {
-            return function (scope, element, attrs) {
-                var sorted_options = JSON.parse(attrs.options),
-                    options = {};
-                element = $(element);
-                foreach_array(sorted_options, function (value) {
-                    options[value[0]] = value[1];
-                });
-                scope.$watch(attrs.tcgEnum, function (value) {
-                    if (value === null) {
-                        value = '';
-                    }
-                    if (options.hasOwnProperty(value)) {
-                        element.text(options[value]);
-                    } else {
-                        element.text(value);
-                    }
-                });
-                element.on('click', function (event) {
+            });
+        };
+    });
+
+    angular.module('tcg').directive('tcgTags', function ($compile) {
+        return function (scope, element, attrs) {
+            var sorted_options = JSON.parse(attrs.options),
+                options = {};
+            element = $(element);
+            foreach_array(sorted_options, function (value) {
+                options[value[0]] = value[1];
+            });
+            function reset() {
+                var elem;
+                element.empty();
+                elem = $("<span>");
+                elem.attr('ng-repeat', 'item in ' + attrs.tcgTags);
+                elem.append($("<span data-ng-hide='$first'></span>").text(element.attr('data-display-separator')));
+                elem.append($("<span data-ng-bind='item' data-tcg-enum-remove='1'></span>")
+                    .attr('data-options', attrs.options)
+                    .attr('data-tcg-enum', attrs.tcgTags + '[$index]')
+                    .attr('data-tcg-enum-remove', attrs.tcgTags + '.splice($index, 1)')
+                    );
+                element.append($compile(elem)(scope));
+                element.append($('<span class="action-button">+</span>').on('click', function (event) {
                     popup_menu(event, element, function () {
-                        var result = [],
-                            current = scope.$eval(attrs.tcgEnum);
-                        foreach_obj(options, function (value, text) {
-                            var item;
-                            if (!value) {
-                                value = null;
-                            }
-                            item = make_menu_item(text, function () {
-                                scope.$apply(attrs.tcgEnum + '=' + JSON.stringify(value));
-                            });
-                            result.push(item);
-                            if (current === value || (!current && !value)) {
-                                item.addClass('disabled');
-                            }
+                        var result = [];
+                        foreach_array(sorted_options, function (value_text) {
+                            var value = value_text[0],
+                                text = value_text[1];
+                            result.push(make_menu_item(text, function () {
+                                scope.$apply(function () {
+                                    if (!scope.$eval(attrs.tcgTags)) {
+                                        scope.$eval(attrs.tcgTags + '=[]');
+                                    }
+                                    scope.$eval(attrs.tcgTags + '.push(' + JSON.stringify(value) + ')');
+                                });
+                            }, text.toLowerCase()));
                         });
                         return result;
                     });
-                });
-            };
-        })
-        .directive('tcgShowModified', function () {
-            return function (scope, element, attrs) {
-                element = $(element);
-                element.addClass('editor-field');
-                scope.$watch('card.' + attrs.tcgShowModified, function (value) {
-                    var now = scope.$eval('card.' + attrs.tcgShowModified),
-                        orig = scope.$eval('orig_card.' + attrs.tcgShowModified);
-                    if (JSON.stringify(now) === JSON.stringify(orig)) {
-                        element.removeClass('unsaved');
-                    } else {
-                        element.addClass('unsaved');
-                    }
-                });
-            };
-        })
-        .directive('tcgDiffHide', function () {
-            return function (scope, element, attrs) {
-                element = $(element);
-                scope.$watch('card', function (value) {
-                    if (JSON.stringify(scope.card) === JSON.stringify(scope.orig_card)) {
-                        element.css('display', 'none');
-                    } else {
-                        element.css('display', 'block');
-                    }
-                }, true);
-            };
-        })
-        .directive('tcgDiff', function () {
-            return function (scope, element, attrs) {
-                element = $(element);
-                scope.$watch('card', function (value) {
-                    var diff = {};
-                    function add_to_diff(key) {
-                        var now, orig;
-                        if (!diff.hasOwnProperty(key)) {
-                            now = JSON.stringify(scope.card[key]);
-                            orig = JSON.stringify(scope.orig_card[key]);
-                            if (now !== orig) {
-                                diff[key] = scope.card[key];
-                            }
+                }));
+            }
+            reset();
+            scope.$watch(attrs.tcgTags, reset, true);
+        };
+    });
+
+    angular.module('tcg').directive('tcgShowModified', function () {
+        return function (scope, element, attrs) {
+            element = $(element);
+            element.addClass('editor-field');
+            scope.$watch('card.' + attrs.tcgShowModified, function (value) {
+                var now = scope.$eval('card.' + attrs.tcgShowModified),
+                    orig = scope.$eval('orig_card.' + attrs.tcgShowModified);
+                if (JSON.stringify(now) === JSON.stringify(orig)) {
+                    element.removeClass('unsaved');
+                } else {
+                    element.addClass('unsaved');
+                }
+            }, true);
+        };
+    });
+
+    angular.module('tcg').directive('tcgDiffHide', function () {
+        return function (scope, element, attrs) {
+            element = $(element);
+            scope.$watch('card', function (value) {
+                if (JSON.stringify(scope.card) === JSON.stringify(scope.orig_card)) {
+                    element.css('display', 'none');
+                } else {
+                    element.css('display', 'block');
+                }
+            }, true);
+        };
+    });
+
+    angular.module('tcg').directive('tcgDiff', function () {
+        return function (scope, element, attrs) {
+            element = $(element);
+            scope.$watch('card', function (value) {
+                var diff = {};
+                function add_to_diff(key) {
+                    var now, orig;
+                    if (!diff.hasOwnProperty(key)) {
+                        now = JSON.stringify(scope.card[key]);
+                        orig = JSON.stringify(scope.orig_card[key]);
+                        if (now !== orig) {
+                            diff[key] = scope.card[key];
                         }
                     }
-                    foreach_obj(scope.card, add_to_diff);
-                    foreach_obj(scope.orig_card, add_to_diff);
-                    $(element).html(prettyPrintOne(JSON.stringify(diff, null, 4), null, true));
-                }, true);
-            };
-        });
+                }
+                foreach_obj(scope.card, add_to_diff);
+                foreach_obj(scope.orig_card, add_to_diff);
+                $(element).html(prettyPrintOne(JSON.stringify(diff, null, 4), null, true));
+            }, true);
+        };
+    });
 
 /*****************************************************************************/
 
@@ -369,81 +427,6 @@ $.tcg_editor = function (context_name, orig_data) {
         }
         return false;
     }
-
-    $('dd[data-type="tags"]').each(function () {
-        var obj = $(this),
-            update,
-            attrs,
-            options,
-            values,
-            sep,
-            container = $('<span>'),
-            appender = $('<span class="action-button">+</span>');
-        sep = obj.attr('data-display-separator');
-        options = JSON.parse(obj.attr('data-options'));
-        values = foreach_array(obj.text().split(sep), null, function (i) {
-            return i.replace(/^\s+|\s+$/g, '');
-        });
-        obj.empty();
-        obj.append(container);
-        function get() {
-            return values;
-        }
-        function set(new_values) {
-            values = new_values.slice(0);
-            container.empty();
-            foreach_array(values, function (value, i) {
-                var element = $('<span>'),
-                    separator = $('<span>');
-                if (i) {
-                    separator.text(sep);
-                    container.append(separator);
-                }
-                element.text(value);
-                container.append(element);
-                element.on('click', function (event) {
-                    popup_menu(event, obj, function () {
-                        var result = [];
-                        foreach_array(options, function (option) {
-                            result.push(make_menu_item(option, function () {
-                                values[i] = option;
-                                update(values);
-                            }, option.toLowerCase()));
-                        }, function (option) {
-                            return option !== value;
-                        });
-                        result.push('<li class="divider"></li>');
-                        result.push(make_menu_item('Remove ' + value, function () {
-                            values.splice(i, 1);
-                            update(values);
-                        }));
-                        return result;
-                    });
-                });
-            });
-        }
-        obj.addClass('editor-field');
-        obj.append(appender);
-        appender.on('click', function (event) {
-            popup_menu(event, obj, function () {
-                var result = [];
-                foreach_array(options, function (option) {
-                    result.push(make_menu_item(option, function () {
-                        values.push(option);
-                        update(values);
-                    }, option.toLowerCase()));
-                });
-                return result;
-            });
-        });
-        update = prepare({
-            get: get,
-            set: set,
-            mark_saved: function () { obj.removeClass('unsaved'); },
-            mark_unsaved: function () { obj.addClass('unsaved'); },
-            key: obj.attr('data-key')
-        });
-    });
 
     $('dd[data-type="int"]').each(function () {
         var obj = $(this),
