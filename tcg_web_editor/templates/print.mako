@@ -59,14 +59,14 @@ flavor = print_.pokemon_flavor
                 data-options="${json.dumps([('', u'N/A')] + [(c.name, c.name) for c in request.db.query(tcg_tables.Stage)])}"
                 >${card.stage.name if card.stage else 'N/A'}</dd>
         </dl>
-        % if card.retreat_cost is not None or card.hp:
         <dl class="row-fluid">
             <dt class="span2">Retreat cost</dt>
-            <dd class="span4" data-key="retreat" data-type="int" nullable="true">${card.retreat_cost}</dd>
+            <dd class="span4" data-tcg-int="card.retreat" data-tcg-show-modified="retreat" data-nullable="true">
+                ${card.retreat_cost if card.retreat_cost is not None else 'N/A'}</dd>
             <dt class="span2">HP</dt>
-            <dd class="span4" data-key="hp" data-type="int" nullable="true" data-step="10">${card.hp}</dd>
+            <dd class="span4" data-tcg-int="card.hp" data-tcg-show-modified="hp" data-nullable="true" data-step="10">
+                ${card.hp or 'N/A'}</dd>
         </dl>
-        % endif
 
         % for mod in card.damage_modifiers:
         <dl class="row-fluid">

@@ -132,13 +132,22 @@ $.tcg_editor = function (context_name, orig_data) {
         return item;
     }
 
+    function action_button(text, onclick) {
+        var elem = $('<span class="action-button"></span>');
+        elem.text(text);
+        if (onclick) {
+            elem.on('click', onclick);
+        }
+        return elem;
+    }
+
     angular.module('tcg', []);
 
     angular.module('tcg').controller('tcgCardCtrl', function ($scope) {
-        $scope.card = {}
-        $scope.orig_card = {}
-        jQuery.extend(true, $scope.card, orig_data);
-        jQuery.extend(true, $scope.orig_card, orig_data);
+        $scope.card = {};
+        $scope.orig_card = {};
+        $.extend(true, $scope.card, orig_data);
+        $.extend(true, $scope.orig_card, orig_data);
     });
 
     angular.module('tcg').directive('tcgStr', function () {
@@ -213,7 +222,7 @@ $.tcg_editor = function (context_name, orig_data) {
             foreach_array(sorted_options, function (value) {
                 options[value[0]] = value[1];
             });
-            function reset() {
+            scope.$watch(attrs.tcgTags, function () {
                 var elem;
                 element.empty();
                 elem = $("<span>");
@@ -225,7 +234,7 @@ $.tcg_editor = function (context_name, orig_data) {
                     .attr('data-tcg-enum-remove', attrs.tcgTags + '.splice($index, 1)')
                     );
                 element.append($compile(elem)(scope));
-                element.append($('<span class="action-button">+</span>').on('click', function (event) {
+                element.append(action_button('+', function (event) {
                     popup_menu(event, element, function () {
                         var result = [];
                         foreach_array(sorted_options, function (value_text) {
@@ -243,9 +252,70 @@ $.tcg_editor = function (context_name, orig_data) {
                         return result;
                     });
                 }));
+            }, true);
+        };
+    });
+
+    angular.module('tcg').directive('tcgInt', function () {
+        return function (scope, element, attrs) {
+            var container = $('<span class="the-value"></span>'),
+                start_y,
+                start_value,
+                step = parseInt(attrs.step, 10) || 1;
+            function get_number() {
+                var value = scope.$eval(attrs.tcgInt);
+                if (typeof value === 'number') {
+                    return value;
+                }
+                return 0;
             }
-            reset();
-            scope.$watch(attrs.tcgTags, reset, true);
+            element = $(element);
+            element.empty();
+            element.append(container);
+            element.append(action_button('▾', function (event) {
+                scope.$apply(function () {
+                    scope.$eval(attrs.tcgInt + '=' + JSON.stringify(get_number()) + '-1');
+                });
+            }));
+            element.append(action_button('⇅').addClass('slider').draggable({
+                axis: "y",
+                start: function (event) {
+                    element.addClass('shown');
+                    start_y = event.pageY;
+                    start_value = get_number();
+                    $(this).css('cursor', '-moz-grabbing');
+                },
+                drag: function (event) {
+                    var value = parseInt(start_value / step + (start_y - event.pageY) / 10, 10) * step;
+                    scope.$apply(attrs.tcgInt + '=' + value);
+                },
+                stop: function () {
+                    element.removeClass('shown');
+                    $(this).css('cursor', '-moz-grab');
+                },
+                revert: true,
+                revertDuration: 0,
+                distance: 0,
+                delay: 0
+            }).css('cursor', '-moz-grab'));
+            element.append(action_button('▴', function (event) {
+                scope.$apply(function () {
+                    scope.$eval(attrs.tcgInt + '=' + JSON.stringify(get_number()) + '+1');
+                });
+            }));
+            if (attrs.nullable) {
+                element.append(action_button('×', function (event) {
+                    scope.$apply(attrs.tcgInt + '=' + JSON.stringify(null));
+                }));
+            }
+            scope.$watch(attrs.tcgInt, function () {
+                var value = scope.$eval(attrs.tcgInt);
+                if (typeof value === 'number') {
+                    container.text(value);
+                } else {
+                    container.text('N/A');
+                }
+            });
         };
     });
 
@@ -423,96 +493,4 @@ $.tcg_editor = function (context_name, orig_data) {
         }
         return false;
     }
-
-    $('dd[data-type="int"]').each(function () {
-        var obj = $(this),
-            container = $('<span class="the-value"></span>'),
-            orig_value,
-            update,
-            start_y,
-            start_value,
-            moving = false,
-            slider_container,
-            step = parseInt(obj.attr('data-step'), 10) || 1;
-        orig_value = parseInt(obj.text(), 10);
-        obj.empty();
-        obj.append(container);
-        container.text(orig_value);
-        function get() {
-            var text = container.text(),
-                value;
-            value = parseInt(container.text(), 10);
-            if (typeof value === 'number' && !isNaN(value)) {
-                return Math.round(value / step, 10) * step;
-            }
-            return null;
-        }
-        function get_number() {
-            var value = get();
-            if (value === null) {
-                return orig_value;
-            }
-            return value;
-        }
-        function set(value) {
-            var target;
-            if (value === null) {
-                if (container.is(":focus")) {
-                    target = '';
-                } else {
-                    target = 'N/A';
-                }
-            } else {
-                target = String(value);
-            }
-            if (target !== container.text()) {
-                container.text(target);
-            }
-        }
-        obj.addClass('editor-field');
-        update = prepare({
-            get: get,
-            set: set,
-            mark_saved: function () { obj.removeClass('unsaved'); },
-            mark_unsaved: function () { obj.addClass('unsaved'); },
-            key: obj.attr('data-key')
-        });
-
-        container.attr('contentEditable', true);
-        container.on('focus blur click paste', function () {
-            update(get());
-        });
-
-        obj.append($('<span class="action-button">▾</span>').on('click', function () {
-            update(get_number() - step);
-        }));
-        obj.append($('<span class="action-button slider">⇅</span>').draggable({
-            axis: "y",
-            start: function (event) {
-                obj.addClass('shown');
-                start_y = event.pageY;
-                start_value = get_number();
-                $(this).css('cursor', '-moz-grabbing');
-            },
-            drag: function (event) {
-                update(parseInt(start_value / step + (start_y - event.pageY) / 10, 10) * step);
-            },
-            stop: function () {
-                obj.removeClass('shown');
-                $(this).css('cursor', '-moz-grab');
-            },
-            revert: true,
-            revertDuration: 0,
-            distance: 0,
-            delay: 0
-        }).css('cursor', '-moz-grab'));
-        obj.append($('<span class="action-button">▴</span>').on('click', function () {
-            update(get_number() + step);
-        }));
-        if (obj.attr('nullable')) {
-            obj.append($('<span class="action-button">×</span>').on('click', function () {
-                update(null);
-            }));
-        }
-    });
 };
