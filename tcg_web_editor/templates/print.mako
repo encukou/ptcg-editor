@@ -68,18 +68,22 @@ flavor = print_.pokemon_flavor
                 ${card.hp or 'N/A'}</dd>
         </dl>
 
-        % for mod in card.damage_modifiers:
-        <dl class="row-fluid">
-            % if mod.operation in '-':
-                <dt class="span2">Resistance</dt>
-            % elif mod.operation in u'+×':
-                <dt class="span2">Weakness</dt>
-            % endif
-            <dd class="span4">
-                ${mod.type.name}: ${mod.operation}${mod.amount}
-            </dd>
-        </dl>
-        % endfor
+        <div data-tcg-damage-mods="card['damage modifiers']">
+            % for mod in card.damage_modifiers:
+            <dl class="row-fluid">
+                <dt class="span2">
+                    % if mod.operation in '-':
+                        Resistance
+                    % elif mod.operation in u'+×':
+                        Weakness
+                    % endif
+                </dt>
+                <dd class="span4">
+                    ${mod.type.name}: ${mod.operation}${mod.amount}
+                </dd>
+            </dl>
+            % endfor
+        </div>
 
         % for evo in card.evolutions:
         <dl class="row-fluid">
@@ -134,6 +138,8 @@ flavor = print_.pokemon_flavor
         </div>
         % endfor
         % endif
+
+        <div data-tcg-adder="1"></div>
 
         <h2>Print</h2>
         % if flavor:

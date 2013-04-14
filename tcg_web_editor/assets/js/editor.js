@@ -191,7 +191,7 @@ $.tcg_editor = function (context_name, orig_data) {
 
     tcg.directive('tcgEnum', function () {
         return function (scope, element, attrs) {
-            var sorted_options = JSON.parse(attrs.options),
+            var sorted_options = JSON.parse(attrs.options || '[]'),
                 options = {};
             element = $(element);
             foreach_array(sorted_options, function (value) {
@@ -308,7 +308,7 @@ $.tcg_editor = function (context_name, orig_data) {
             element.append(action_button('⇅').addClass('slider').draggable({
                 axis: "y",
                 start: function (event) {
-                    element.addClass('shown');
+                    element.parents("*[data-tcg-show-modified]").add(element).addClass('shown');
                     start_y = event.pageY;
                     start_value = get_number();
                     $(this).css('cursor', '-moz-grabbing');
@@ -318,7 +318,7 @@ $.tcg_editor = function (context_name, orig_data) {
                     scope.$apply(attrs.tcgInt + '=' + value);
                 },
                 stop: function () {
-                    element.removeClass('shown');
+                    element.parents("*[data-tcg-show-modified]").add(element).removeClass('shown');
                     $(this).css('cursor', '-moz-grab');
                 },
                 revert: true,
@@ -347,14 +347,90 @@ $.tcg_editor = function (context_name, orig_data) {
         };
     });
 
-    tcg.directive('tcgShowModified', function () {
+    tcg.directive('tcgDamageMods', function ($compile) {
+        return function (scope, element, attrs) {
+            var replacement;
+            element = $(element);
+            element.empty();
+            replacement = $('<div data-ng-repeat="mod in ' + attrs.tcgDamageMods + '"></div>');
+            replacement.append($('<dl class="row-fluid"></dl>')
+                .append($('<dt class="span2"></dt>')
+                    .attr('data-ng-bind', "(mod.operation == '-') && 'Resistance' || 'Weakness'")
+                    .attr('data-tcg-remove-from', attrs.tcgDamageMods))
+                .append($('<dd class="span4" data-tcg-show-modified="' + attrs.tcgDamageMods + '[$index]"></dd>')
+                    .append($('<span data-tcg-enum="mod.type"></span>')
+                        .attr('data-options', $('*[data-tcg-show-modified=types]').attr('data-options')))
+                    .append(': ')
+                    .append($('<span data-tcg-enum="mod.operation"></span>')
+                        .attr('data-options', JSON.stringify([["-", "-"], ["+", "+"], ["×", "×"]])))
+                    .append($('<span data-tcg-int="mod.amount"></span>'))
+                    ));
+            element.append($compile(replacement)(scope));
+        };
+    });
+
+    tcg.directive('tcgRemoveFrom', function ($compile) {
         return function (scope, element, attrs) {
             element = $(element);
+            element.on('click', function (event) {
+                popup_menu(event, element.parent(), function () {
+                    return [
+                        make_menu_item('Remove this ' + element.text(), function () {
+                            console.log(attrs.tcgRemoveFrom + '.splice($index, 1)',  scope.$eval('$index'));
+                            scope.$apply(attrs.tcgRemoveFrom + '.splice($index, 1)');
+                        })
+                    ];
+                });
+            });
+        };
+    });
+
+    tcg.directive('tcgAdder', function () {
+        return function (scope, element, attrs) {
+            element = $(element);
+            element.attr('data-tcg-show-modified', '1');
+            element.css('cursor', 'default');
+            element.append(action_button('+', function (event) {
+                popup_menu(event, element, function () {
+                    return [
+                        make_menu_item('Add Weakness', function () {
+                            scope.$apply(function () {
+                                scope.card['damage modifiers'].push({
+                                    amount: 2,
+                                    operation: '×',
+                                    type: 'Fire'
+                                });
+                            });
+                        }),
+                        make_menu_item('Add Resistance', function () {
+                            scope.$apply(function () {
+                                scope.card['damage modifiers'].push({
+                                    amount: 20,
+                                    operation: '-',
+                                    type: 'Fire'
+                                });
+                            });
+                        })
+                    ];
+                });
+            }));
+        };
+    });
+
+    tcg.directive('tcgShowModified', function () {
+        return function (scope, element, attrs) {
+            var exp = attrs.tcgShowModified.replace(/^card[.]?/, '');
+            if (exp.indexOf('[') !== 0) {
+                exp = '.' + exp;
+            }
+            element = $(element);
             element.addClass('editor-field');
-            scope.$watch('card.' + attrs.tcgShowModified, function (value) {
-                var now = scope.$eval('card.' + attrs.tcgShowModified),
-                    orig = scope.$eval('orig_card.' + attrs.tcgShowModified);
-                if (JSON.stringify(now) === JSON.stringify(orig) || (now === null && orig === undefined)) {
+            scope.$watch('card' + exp, function (value) {
+                var now,
+                    orig;
+                now = scope.$eval('card' + exp);
+                orig = scope.$eval('orig_card' + exp);
+                if (angular.toJson(now) === angular.toJson(orig) || (now === null && orig === undefined)) {
                     element.removeClass('unsaved');
                 } else {
                     element.addClass('unsaved');
@@ -367,7 +443,7 @@ $.tcg_editor = function (context_name, orig_data) {
         return function (scope, element, attrs) {
             element = $(element);
             scope.$watch('card', function (value) {
-                if (JSON.stringify(scope.card) === JSON.stringify(scope.orig_card)) {
+                if (angular.toJson(scope.card) === angular.toJson(scope.orig_card)) {
                     element.css('display', 'none');
                 } else {
                     element.css('display', 'block');
@@ -378,16 +454,19 @@ $.tcg_editor = function (context_name, orig_data) {
 
     function make_diff(now, orig) {
         var diff = {};
+        now = angular.copy(now);
         function add_to_diff(key) {
             var val_now, val_orig;
-            if (!diff.hasOwnProperty(key)) {
-                val_now = JSON.stringify(now[key]);
-                val_orig = JSON.stringify(orig[key]);
+            if (key.indexOf('$') !== 0 && !diff.hasOwnProperty(key)) {
+                val_now = angular.toJson(now[key]);
+                val_orig = angular.toJson(orig[key]);
                 if (val_now !== val_orig) {
-                    if (val_now === undefined) {
-                        diff[key] = null;
-                    } else {
-                        diff[key] = now[key];
+                    if (now[key] !== null || orig[key] !== undefined) {
+                        if (val_now === undefined) {
+                            diff[key] = null;
+                        } else {
+                            diff[key] = now[key];
+                        }
                     }
                 }
             }
@@ -411,8 +490,8 @@ $.tcg_editor = function (context_name, orig_data) {
         return function (scope, element, attrs) {
             element = $(element);
             scope.$watch('card', function (value) {
-                var diff = make_diff(scope.card, scope.orig_card);
-                $(element).html(prettyPrintOne(JSON.stringify(diff, null, 4), null, true));
+                var diff = angular.toJson(make_diff(scope.card, scope.orig_card), true);
+                $(element).html(prettyPrintOne(diff, null, true));
             }, true);
         };
     });

@@ -21,7 +21,7 @@
 
 .action-button {
     display: inline-block;
-    width: 1em;
+    min-width: 1em;
     height: 1em;
     margin-left: 1ex;
     border-radius: 0.4em;
@@ -30,6 +30,7 @@
     visibility: hidden;
     color: rgb(153, 153, 153);
     border: 1px solid rgb(153, 153, 153);
+    cursor: default;
 
     user-select: none;
     -webkit-touch-callout: none;

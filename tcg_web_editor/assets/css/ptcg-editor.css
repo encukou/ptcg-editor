@@ -3,7 +3,6 @@
 
 body {
     /* Space for navbar; beathing space below */
-    padding-top: 60px;
     padding-bottom: 10px;
 }
 footer {
@@ -27,7 +26,11 @@ body .row-fluid [class*="span"] {
     /* <dt>s and mechanic titles serve as headers */
     font-weight: bold;
 }
-@media (min-width: 767px) {
+@media (min-width: 980px) {
+    body {
+        padding-top: 60px;
+    }
+
     /* Wide screen; align captions so they're closer to their data */
     .mechanic-type, dt {
         text-align: right;
