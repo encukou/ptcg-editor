@@ -4,11 +4,23 @@ $.tcg_editor = function (context_name, orig_data) {
     "use strict";
     var localStorage,
         storage_key = "edit_" + context_name,
-        data,
         storage_listeners = [],
         display_container,
         display_pre,
-        currently_displayed_menu;
+        currently_displayed_menu,
+        tcg;
+
+    function have_html5_storage() {
+        try {
+            return window.localStorage !== undefined  && window.localStorage !== null;
+        } catch (e) {
+            return false;
+        }
+    }
+    if (!have_html5_storage()) {
+        return;
+    }
+    localStorage = window.localStorage;
 
     function foreach_obj(obj, func, filter) {
         var name;
@@ -48,6 +60,17 @@ $.tcg_editor = function (context_name, orig_data) {
             }
         }
         return result;
+    }
+
+    // http://stackoverflow.com/questions/4994201/is-object-empty
+    function is_empty(obj) {
+        var key;
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     function hide_menu() {
@@ -141,16 +164,17 @@ $.tcg_editor = function (context_name, orig_data) {
         return elem;
     }
 
-    angular.module('tcg', []);
+    tcg = angular.module('tcg', []);
 
-    angular.module('tcg').controller('tcgCardCtrl', function ($scope) {
+    tcg.controller('tcgCardCtrl', function ($scope, tcgLocalStorage) {
         $scope.card = {};
         $scope.orig_card = {};
         $.extend(true, $scope.card, orig_data);
         $.extend(true, $scope.orig_card, orig_data);
-    });
+        tcgLocalStorage.watch($scope);
+    }).$inject = ['tcgLocalStorage'];
 
-    angular.module('tcg').directive('tcgStr', function () {
+    tcg.directive('tcgStr', function () {
         return function (scope, element, attrs) {
             element = $(element);
             element.attr('contentEditable', true);
@@ -165,7 +189,7 @@ $.tcg_editor = function (context_name, orig_data) {
         };
     });
 
-    angular.module('tcg').directive('tcgEnum', function () {
+    tcg.directive('tcgEnum', function () {
         return function (scope, element, attrs) {
             var sorted_options = JSON.parse(attrs.options),
                 options = {};
@@ -214,7 +238,7 @@ $.tcg_editor = function (context_name, orig_data) {
         };
     });
 
-    angular.module('tcg').directive('tcgTags', function ($compile) {
+    tcg.directive('tcgTags', function ($compile) {
         return function (scope, element, attrs) {
             var sorted_options = JSON.parse(attrs.options),
                 options = {};
@@ -256,7 +280,7 @@ $.tcg_editor = function (context_name, orig_data) {
         };
     });
 
-    angular.module('tcg').directive('tcgInt', function () {
+    tcg.directive('tcgInt', function () {
         return function (scope, element, attrs) {
             var container = $('<span class="the-value"></span>'),
                 start_y,
@@ -319,7 +343,7 @@ $.tcg_editor = function (context_name, orig_data) {
         };
     });
 
-    angular.module('tcg').directive('tcgShowModified', function () {
+    tcg.directive('tcgShowModified', function () {
         return function (scope, element, attrs) {
             element = $(element);
             element.addClass('editor-field');
@@ -335,7 +359,7 @@ $.tcg_editor = function (context_name, orig_data) {
         };
     });
 
-    angular.module('tcg').directive('tcgDiffHide', function () {
+    tcg.directive('tcgDiffHide', function () {
         return function (scope, element, attrs) {
             element = $(element);
             scope.$watch('card', function (value) {
@@ -348,93 +372,76 @@ $.tcg_editor = function (context_name, orig_data) {
         };
     });
 
-    angular.module('tcg').directive('tcgDiff', function () {
+    function make_diff(now, orig) {
+        var diff = {};
+        function add_to_diff(key) {
+            var val_now, val_orig;
+            if (!diff.hasOwnProperty(key)) {
+                val_now = JSON.stringify(now[key]);
+                val_orig = JSON.stringify(orig[key]);
+                if (val_now !== val_orig) {
+                    diff[key] = now[key];
+                }
+            }
+        }
+        foreach_obj(now, add_to_diff);
+        foreach_obj(orig, add_to_diff);
+        return diff;
+    }
+
+    function apply_diff(obj, diff) {
+        foreach_obj(diff, function (key, value) {
+            obj[key] = value;
+        });
+    }
+
+    tcg.directive('tcgDiff', function () {
         return function (scope, element, attrs) {
             element = $(element);
             scope.$watch('card', function (value) {
-                var diff = {};
-                function add_to_diff(key) {
-                    var now, orig;
-                    if (!diff.hasOwnProperty(key)) {
-                        now = JSON.stringify(scope.card[key]);
-                        orig = JSON.stringify(scope.orig_card[key]);
-                        if (now !== orig) {
-                            diff[key] = scope.card[key];
-                        }
-                    }
-                }
-                foreach_obj(scope.card, add_to_diff);
-                foreach_obj(scope.orig_card, add_to_diff);
+                var diff = make_diff(scope.card, scope.orig_card);
                 $(element).html(prettyPrintOne(JSON.stringify(diff, null, 4), null, true));
             }, true);
         };
     });
 
-/*****************************************************************************/
-
-    function have_html5_storage() {
+    function load_from_storage(key) {
+        var data;
         try {
-            return window.localStorage !== undefined  && window.localStorage !== null;
-        } catch (e) {
-            return false;
-        }
-    }
-    if (!have_html5_storage()) {
-        return;
-    }
-    localStorage = window.localStorage;
-
-    // http://stackoverflow.com/questions/4994201/is-object-empty
-    function is_empty(obj) {
-        var key;
-        for (key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    display_container = $('<div class="container"></div>');
-    display_container.append('<h2>Your unsaved edits</h2>');
-    $('#edittabs-json').append(display_container);
-    display_container.hide();
-    display_pre = $('<pre></pre>');
-    display_pre.appendTo(display_container);
-
-    function load_from_storage() {
-        var i;
-        try {
-            data = JSON.parse(localStorage.getItem(storage_key));
+            data = JSON.parse(localStorage.getItem(key));
             if (data === null) {
                 data = {};
             }
         } catch (e) {
             data = {};
         }
-        foreach_array(storage_listeners, function (listener) {
-            listener();
-        });
+        return data;
     }
-    load_from_storage();
-    $(window).bind('storage', load_from_storage);
-    function data_save() {
-        if (is_empty(data)) {
-            localStorage.removeItem(storage_key);
-        } else {
-            localStorage.setItem(storage_key, JSON.stringify(data));
-        }
-    }
-    function data_set(key, value) {
-        if (data[key] !== value) {
-            data[key] = value;
-            data_save();
-        }
-    }
-    function data_remove(key) {
-        if (data.hasOwnProperty(key)) {
-            delete data[key];
-            data_save();
-        }
-    }
+
+    tcg.factory('tcgLocalStorage', function () {
+        var tcgLocalStorage = {
+            watch: function (scope) {
+                var last = scope;
+
+                apply_diff(scope.card, load_from_storage(storage_key));
+
+                $(window).bind('storage', function (event) {
+                    scope.$apply(function () {
+                        apply_diff(scope.card, scope.orig_card);
+                        apply_diff(scope.card, load_from_storage(storage_key));
+                    });
+                });
+
+                scope.$watch('card', function (value) {
+                    var diff = make_diff(scope.card, scope.orig_card);
+                    if (is_empty(diff)) {
+                        localStorage.removeItem(storage_key);
+                    } else {
+                        localStorage.setItem(storage_key, JSON.stringify(diff));
+                    }
+                }, true);
+            }
+        };
+        return tcgLocalStorage;
+    });
 };
