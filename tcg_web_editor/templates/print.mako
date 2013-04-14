@@ -37,7 +37,7 @@ flavor = print_.pokemon_flavor
             <dt class="span2">Name</dt>
             <dd class="span4" data-tcg-str="card.name" tcg-show-modified="name">${card.name}d</dd>
             <dt class="span2">Card class</dt>
-            <dd class="span4" data-key="class" data-type="enum"
+            <dd class="span4" data-tcg-enum="card.class" tcg-show-modified="class"
                 data-options="${json.dumps([(c.name[0], c.name) for c in request.db.query(tcg_tables.Class)])}"
                 >${card.class_.name}</dd>
         </dl>
@@ -55,7 +55,7 @@ flavor = print_.pokemon_flavor
                 data-options="${json.dumps([c.name for c in request.db.query(tcg_tables.TCGType)])}"
                 >${'/'.join(t.name for t in card.types) or Markup('&nbsp;')}</dd>
             <dt class="span2">Stage</dt>
-            <dd class="span4" data-key="stage" data-type="enum"
+            <dd class="span4" data-tcg-enum="card.stage" tcg-show-modified="stage"
                 data-options="${json.dumps([('', u'N/A')] + [(c.name, c.name) for c in request.db.query(tcg_tables.Stage)])}"
                 >${card.stage.name if card.stage else 'N/A'}</dd>
         </dl>
@@ -319,6 +319,7 @@ flavor = print_.pokemon_flavor
 <%def name="extra_html_attrs()">
     data-ng-app="tcg"
     data-ng-controller="tcgCardCtrl"
+    id="ng-app"
 </%def>
 
 <% ''' TODO:

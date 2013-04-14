@@ -29,6 +29,109 @@ $.tcg_editor = function (context_name, orig_data) {
         }
     }
 
+    function foreach_array(array, func, filter) {
+        var i,
+            result = [];
+        if (!func) {
+            func = function (v) {
+                return v;
+            };
+        }
+        if (!filter) {
+            filter = function (v) {
+                return true;
+            };
+        }
+        for (i = 0; i < array.length; i += 1) {
+            if (filter(array[i])) {
+                result.push(func(array[i], i));
+            }
+        }
+        return result;
+    }
+
+    function hide_menu() {
+        if (currently_displayed_menu) {
+            currently_displayed_menu.remove();
+            currently_displayed_menu = null;
+        }
+    }
+    $(window.document).bind('click', hide_menu);
+
+    function popup_menu(event, obj, get_items) {
+        var items,
+            search_items = [],
+            menu,
+            menu_in,
+            searchbox,
+            implicitly_selected_item = null;
+        hide_menu();
+        obj.addClass('dropdown open');
+        menu = $('<div class="dropdown-menu"></div>');
+        menu_in = $('<ul class="dropdown-menu-in" role="menu" aria-labelledby="dropdownMenu"></ul>');
+        menu_in.css('max-height', '20em');
+        menu.append(menu_in);
+        items = get_items();
+        foreach_array(items, function (item) {
+            item = $(item);
+            if (item.attr('data-search-key')) {
+                menu_in.append(item);
+                search_items.push(item);
+            } else {
+                menu.append(item);
+            }
+        });
+        obj.append(menu);
+        currently_displayed_menu = menu;
+        event.stopPropagation();
+
+        if (search_items.length > 10) {
+            searchbox = $('<input type="search">');
+            menu_in.before(searchbox);
+            searchbox.on('click', function (event) {
+                event.stopPropagation();
+            }).on('edit keydown keyup', function (event) {
+                var term = searchbox.val().toLowerCase(),
+                    matching_items = [];
+                foreach_array(search_items, function (item) {
+                    item.removeClass('implicitly-selected');
+                    if (item.attr('data-search-key').indexOf(term) !== -1) {
+                        item.slideDown('fast');
+                        matching_items.push(item);
+                    } else {
+                        item.slideUp('fast');
+                    }
+                });
+                if (matching_items.length === 1) {
+                    implicitly_selected_item = matching_items[0];
+                    implicitly_selected_item.addClass('implicitly-selected');
+                } else {
+                    implicitly_selected_item = null;
+                }
+            }).on('keydown', function (event) {
+                if (event.which === 13 && implicitly_selected_item) {
+                    implicitly_selected_item.trigger('click');
+                }
+            });
+            searchbox.focus();
+        }
+    }
+
+    function make_menu_item(text, onclick, search_key) {
+        var item;
+        item = $('<li><a></a></li>');
+        item.find('a').text(text);
+        item.click(function (event) {
+            onclick();
+            hide_menu();
+            event.stopPropagation();
+        });
+        if (search_key) {
+            item.attr('data-search-key', search_key);
+        }
+        return item;
+    }
+
     angular.module('tcg', [])
         .controller('tcgCardCtrl', function ($scope) {
             var card = {},
@@ -43,7 +146,6 @@ $.tcg_editor = function (context_name, orig_data) {
         .directive('tcgStr', function () {
             return function (scope, element, attrs) {
                 element = $(element);
-                element.addClass('editor-field');
                 element.attr('contentEditable', true);
                 scope.$watch(attrs.tcgStr, function (value) {
                     if (element.text() !== value) {
@@ -51,8 +153,46 @@ $.tcg_editor = function (context_name, orig_data) {
                     }
                 });
                 element.on('focus blur keypress keyup click paste', function () {
-                    scope.$apply(function (scope) {
-                        scope.$eval(attrs.tcgStr + '=' + JSON.stringify(element.text()));
+                    scope.$apply(attrs.tcgStr + '=' + JSON.stringify(element.text()));
+                });
+            };
+        })
+        .directive('tcgEnum', function () {
+            return function (scope, element, attrs) {
+                var sorted_options = JSON.parse(attrs.options),
+                    options = {};
+                element = $(element);
+                foreach_array(sorted_options, function (value) {
+                    options[value[0]] = value[1];
+                });
+                scope.$watch(attrs.tcgEnum, function (value) {
+                    if (value === null) {
+                        value = '';
+                    }
+                    if (options.hasOwnProperty(value)) {
+                        element.text(options[value]);
+                    } else {
+                        element.text(value);
+                    }
+                });
+                element.on('click', function (event) {
+                    popup_menu(event, element, function () {
+                        var result = [],
+                            current = scope.$eval(attrs.tcgEnum);
+                        foreach_obj(options, function (value, text) {
+                            var item;
+                            if (!value) {
+                                value = null;
+                            }
+                            item = make_menu_item(text, function () {
+                                scope.$apply(attrs.tcgEnum + '=' + JSON.stringify(value));
+                            });
+                            result.push(item);
+                            if (current === value || (!current && !value)) {
+                                item.addClass('disabled');
+                            }
+                        });
+                        return result;
                     });
                 });
             };
@@ -60,6 +200,7 @@ $.tcg_editor = function (context_name, orig_data) {
         .directive('tcgShowModified', function () {
             return function (scope, element, attrs) {
                 element = $(element);
+                element.addClass('editor-field');
                 scope.$watch('card.' + attrs.tcgShowModified, function (value) {
                     var now = scope.$eval('card.' + attrs.tcgShowModified),
                         orig = scope.$eval('orig_card.' + attrs.tcgShowModified);
@@ -107,26 +248,6 @@ $.tcg_editor = function (context_name, orig_data) {
 
 /*****************************************************************************/
 
-    function foreach_array(array, func, filter) {
-        var i,
-            result = [];
-        if (!func) {
-            func = function (v) {
-                return v;
-            };
-        }
-        if (!filter) {
-            filter = function (v) {
-                return true;
-            };
-        }
-        for (i = 0; i < array.length; i += 1) {
-            if (filter(array[i])) {
-                result.push(func(array[i], i));
-            }
-        }
-        return result;
-    }
 
     function log() {
         if (window.console) {
@@ -232,87 +353,6 @@ $.tcg_editor = function (context_name, orig_data) {
         return update;
     }
 
-    function hide_menu() {
-        if (currently_displayed_menu) {
-            currently_displayed_menu.remove();
-            currently_displayed_menu = null;
-        }
-    }
-    $(window.document).bind('click', hide_menu);
-
-    function popup_menu(event, obj, get_items) {
-        var items,
-            search_items = [],
-            menu,
-            menu_in,
-            searchbox,
-            implicitly_selected_item = null;
-        hide_menu();
-        obj.addClass('dropdown open');
-        menu = $('<div class="dropdown-menu"></div>');
-        menu_in = $('<ul class="dropdown-menu-in" role="menu" aria-labelledby="dropdownMenu"></ul>');
-        menu_in.css('max-height', '20em');
-        menu.append(menu_in);
-        items = get_items();
-        foreach_array(items, function (item) {
-            item = $(item);
-            if (item.attr('data-search-key')) {
-                menu_in.append(item);
-                search_items.push(item);
-            } else {
-                menu.append(item);
-            }
-        });
-        obj.append(menu);
-        currently_displayed_menu = menu;
-        event.stopPropagation();
-
-        if (search_items.length > 10) {
-            searchbox = $('<input type="search">');
-            menu_in.before(searchbox);
-            searchbox.on('click', function (event) {
-                event.stopPropagation();
-            }).on('edit keydown keyup', function (event) {
-                var term = searchbox.val().toLowerCase(),
-                    matching_items = [];
-                foreach_array(search_items, function (item) {
-                    item.removeClass('implicitly-selected');
-                    if (item.attr('data-search-key').indexOf(term) !== -1) {
-                        item.slideDown('fast');
-                        matching_items.push(item);
-                    } else {
-                        item.slideUp('fast');
-                    }
-                });
-                if (matching_items.length === 1) {
-                    implicitly_selected_item = matching_items[0];
-                    implicitly_selected_item.addClass('implicitly-selected');
-                } else {
-                    implicitly_selected_item = null;
-                }
-            }).on('keydown', function (event) {
-                if (event.which === 13 && implicitly_selected_item) {
-                    implicitly_selected_item.trigger('click');
-                }
-            });
-            searchbox.focus();
-        }
-    }
-    function make_menu_item(text, onclick, search_key) {
-        var item;
-        item = $('<li><a></a></li>');
-        item.find('a').text(text);
-        item.click(function (event) {
-            onclick();
-            hide_menu();
-            event.stopPropagation();
-        });
-        if (search_key) {
-            item.attr('data-search-key', search_key);
-        }
-        return item;
-    }
-
     function num_from_attr(attr, deflt) {
         if (attr === undefined) {
             return deflt;
@@ -329,59 +369,6 @@ $.tcg_editor = function (context_name, orig_data) {
         }
         return false;
     }
-
-    $('dd[data-type="enum"]').each(function () {
-        var obj = $(this),
-            update,
-            attrs,
-            val,
-            options = {},
-            rev_options = {};
-        attrs = JSON.parse(obj.attr('data-options'));
-        foreach_array(attrs, function (item) {
-            var value = item[0],
-                text = item[1];
-            options[value] = text;
-            rev_options[text] = value;
-        });
-        function get() {
-            var rv = rev_options[obj.text()];
-            if (!rv) {
-                return null;
-            }
-            return rv;
-        }
-        function set(value) {
-            if (!options[value]) {
-                obj.text();
-            } else {
-                obj.text(options[value]);
-            }
-        }
-        update = prepare({
-            get: get,
-            set: set,
-            mark_saved: function () { obj.removeClass('unsaved'); },
-            mark_unsaved: function () { obj.addClass('unsaved'); },
-            key: obj.attr('data-key')
-        });
-        obj.addClass('editor-field');
-        obj.on('click', function (event) {
-            popup_menu(event, obj, function () {
-                var result = [],
-                    current = get(),
-                    item;
-                foreach_obj(options, function (value, text) {
-                    if (current !== value && (current || value)) {
-                        result.push(make_menu_item(text, function () {
-                            update(value);
-                        }));
-                    }
-                });
-                return result;
-            });
-        });
-    });
 
     $('dd[data-type="tags"]').each(function () {
         var obj = $(this),
