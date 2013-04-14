@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <%def name="extra_scripts()"></%def>
 <%def name="extra_css()"></%def>
+<%def name="extra_html_attrs()"></%def>
 
-<html lang="en">
+<html lang="en" ${self.extra_html_attrs()}>
   <head>
     % if this is this.root:
         <title>${this.friendly_name}</title>
@@ -67,7 +68,8 @@
             for <a href="http://pokebeach.com/">PokéBeach</a>.
     </footer>
 
-    <script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script src="${asset_url('js/angular.min.js')}"></script>
     <script src="${asset_url('js/bootstrap.js')}"></script>
     <script src="${asset_url('js/jquery-ui-1.10.2.custom.min.js')}"></script>
     <script>

@@ -35,7 +35,7 @@ flavor = print_.pokemon_flavor
 
         <dl class="row-fluid">
             <dt class="span2">Name</dt>
-            <dd class="span4" data-key="name" data-type="str">${card.name}</dd>
+            <dd class="span4" data-tcg-str="card.name" tcg-show-modified="name">${card.name}d</dd>
             <dt class="span2">Card class</dt>
             <dd class="span4" data-key="class" data-type="enum"
                 data-options="${json.dumps([(c.name[0], c.name) for c in request.db.query(tcg_tables.Class)])}"
@@ -249,7 +249,7 @@ flavor = print_.pokemon_flavor
 <div class="container">
 
     <h2>JSON Data</h2>
-    <pre class="prettyprint linenums">
+    <pre class="prettyprint linenums" id="orig-data">
     ${json.dumps(this.__json__(), sort_keys=True, ensure_ascii=False, indent=4)}
     </pre>
     <div class="container">
@@ -258,6 +258,11 @@ flavor = print_.pokemon_flavor
         savory <a href="${this['yaml'].url}">YAML</a>
         to our dear data gastronomists.
         Do however note that the schema is not yet set in stone.
+    </div>
+
+    <div style="display: none;" data-tcg-diff-hide="1">
+        <h2>Your unsaved edits</h2>
+        <pre data-tcg-diff="1"></pre>
     </div>
 
 </div>
@@ -305,8 +310,15 @@ flavor = print_.pokemon_flavor
             });
         })
         $(prettyPrint);
-        $.tcg_editor("${'{}/{}'.format(this.parent.name, this.name)}");
+        $.tcg_editor(
+            "${'{}/{}'.format(this.parent.name, this.name)}",
+            JSON.parse($("#orig-data").text()));
     </script>
+</%def>
+
+<%def name="extra_html_attrs()">
+    data-ng-app="tcg"
+    data-ng-controller="tcgCardCtrl"
 </%def>
 
 <% ''' TODO:

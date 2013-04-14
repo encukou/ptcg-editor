@@ -1,6 +1,6 @@
-/*global prettyPrintOne */
+/*global prettyPrintOne, angular, */
 
-$.tcg_editor = function (context_name) {
+$.tcg_editor = function (context_name, orig_data) {
     "use strict";
     var localStorage,
         storage_key = "edit_" + context_name,
@@ -9,6 +9,103 @@ $.tcg_editor = function (context_name) {
         display_container,
         display_pre,
         currently_displayed_menu;
+
+    function foreach_obj(obj, func, filter) {
+        var name;
+        if (!func) {
+            func = function (v) {
+                return v;
+            };
+        }
+        if (!filter) {
+            filter = function (v) {
+                return true;
+            };
+        }
+        for (name in obj) {
+            if (obj.hasOwnProperty(name) && filter(name, obj[name])) {
+                func(name, obj[name]);
+            }
+        }
+    }
+
+    angular.module('tcg', [])
+        .controller('tcgCardCtrl', function ($scope) {
+            var card = {},
+                orig_card = {};
+            $scope.card = card;
+            $scope.orig_card = orig_card;
+            foreach_obj(orig_data, function (key, value) {
+                card[key] = value;
+                orig_card[key] = value;
+            });
+        })
+        .directive('tcgStr', function () {
+            return function (scope, element, attrs) {
+                element = $(element);
+                element.addClass('editor-field');
+                element.attr('contentEditable', true);
+                scope.$watch(attrs.tcgStr, function (value) {
+                    if (element.text() !== value) {
+                        element.text(value);
+                    }
+                });
+                element.on('focus blur keypress keyup click paste', function () {
+                    scope.$apply(function (scope) {
+                        scope.$eval(attrs.tcgStr + '=' + JSON.stringify(element.text()));
+                    });
+                });
+            };
+        })
+        .directive('tcgShowModified', function () {
+            return function (scope, element, attrs) {
+                element = $(element);
+                scope.$watch('card.' + attrs.tcgShowModified, function (value) {
+                    var now = scope.$eval('card.' + attrs.tcgShowModified),
+                        orig = scope.$eval('orig_card.' + attrs.tcgShowModified);
+                    if (JSON.stringify(now) === JSON.stringify(orig)) {
+                        element.removeClass('unsaved');
+                    } else {
+                        element.addClass('unsaved');
+                    }
+                });
+            };
+        })
+        .directive('tcgDiffHide', function () {
+            return function (scope, element, attrs) {
+                element = $(element);
+                scope.$watch('card', function (value) {
+                    if (JSON.stringify(scope.card) === JSON.stringify(scope.orig_card)) {
+                        element.css('display', 'none');
+                    } else {
+                        element.css('display', 'block');
+                    }
+                }, true);
+            };
+        })
+        .directive('tcgDiff', function () {
+            return function (scope, element, attrs) {
+                element = $(element);
+                scope.$watch('card', function (value) {
+                    var diff = {};
+                    function add_to_diff(key) {
+                        var now, orig;
+                        if (!diff.hasOwnProperty(key)) {
+                            now = JSON.stringify(scope.card[key]);
+                            orig = JSON.stringify(scope.orig_card[key]);
+                            if (now !== orig) {
+                                diff[key] = scope.card[key];
+                            }
+                        }
+                    }
+                    foreach_obj(scope.card, add_to_diff);
+                    foreach_obj(scope.orig_card, add_to_diff);
+                    $(element).html(prettyPrintOne(JSON.stringify(diff, null, 4), null, true));
+                }, true);
+            };
+        });
+
+/*****************************************************************************/
 
     function foreach_array(array, func, filter) {
         var i,
@@ -29,25 +126,6 @@ $.tcg_editor = function (context_name) {
             }
         }
         return result;
-    }
-
-    function foreach_obj(obj, func, filter) {
-        var name;
-        if (!func) {
-            func = function (v) {
-                return v;
-            };
-        }
-        if (!filter) {
-            filter = function (v) {
-                return true;
-            };
-        }
-        for (name in obj) {
-            if (obj.hasOwnProperty(name) && filter(name, obj[name])) {
-                func(name, obj[name]);
-            }
-        }
     }
 
     function log() {
@@ -87,12 +165,6 @@ $.tcg_editor = function (context_name) {
     display_container.hide();
     display_pre = $('<pre></pre>');
     display_pre.appendTo(display_container);
-    function show_edits() {
-        display_pre.html(prettyPrintOne(JSON.stringify(data, null, 4), null, true));
-        if (!is_empty(data)) {
-            display_container.show();
-        }
-    }
 
     function load_from_storage() {
         var i;
@@ -107,7 +179,6 @@ $.tcg_editor = function (context_name) {
         foreach_array(storage_listeners, function (listener) {
             listener();
         });
-        show_edits();
     }
     load_from_storage();
     $(window).bind('storage', load_from_storage);
@@ -117,7 +188,6 @@ $.tcg_editor = function (context_name) {
         } else {
             localStorage.setItem(storage_key, JSON.stringify(data));
         }
-        show_edits();
     }
     function data_set(key, value) {
         if (data[key] !== value) {
@@ -134,7 +204,7 @@ $.tcg_editor = function (context_name) {
 
     function prepare(options) {
         var data_key = options.key,
-            orig_value = options.get();
+            orig_value = orig_data[options.key];
         function update(value) {
             if (value === undefined) {
                 value = options.get();
@@ -161,23 +231,6 @@ $.tcg_editor = function (context_name) {
         storage_listeners.push(update_from_storage);
         return update;
     }
-
-    $('dd[data-type="str"]').each(function () {
-        var obj = $(this),
-            update;
-        update = prepare({
-            get: function () { return obj.text(); },
-            set: function (value) { return obj.text(value); },
-            mark_saved: function () { obj.removeClass('unsaved'); },
-            mark_unsaved: function () { obj.addClass('unsaved'); },
-            key: obj.attr('data-key')
-        });
-        obj.addClass('editor-field');
-        obj.attr('contentEditable', true);
-        obj.on('focus blur keypress keyup click paste', function () {
-            update();
-        });
-    });
 
     function hide_menu() {
         if (currently_displayed_menu) {
@@ -423,7 +476,6 @@ $.tcg_editor = function (context_name) {
             var text = container.text(),
                 value;
             value = parseInt(container.text(), 10);
-            console.log(value, typeof value);
             if (typeof value === 'number' && !isNaN(value)) {
                 return Math.round(value / step, 10) * step;
             }
@@ -445,7 +497,7 @@ $.tcg_editor = function (context_name) {
                     target = 'N/A';
                 }
             } else {
-                target = "" + value;
+                target = String(value);
             }
             if (target !== container.text()) {
                 container.text(target);
@@ -474,14 +526,14 @@ $.tcg_editor = function (context_name) {
                 obj.addClass('shown');
                 start_y = event.pageY;
                 start_value = get_number();
-                $(this).css('cursor', '-moz-grabbing')
+                $(this).css('cursor', '-moz-grabbing');
             },
             drag: function (event) {
                 update(parseInt(start_value / step + (start_y - event.pageY) / 10, 10) * step);
             },
             stop: function () {
                 obj.removeClass('shown');
-                $(this).css('cursor', '-moz-grab')
+                $(this).css('cursor', '-moz-grab');
             },
             revert: true,
             revertDuration: 0,
