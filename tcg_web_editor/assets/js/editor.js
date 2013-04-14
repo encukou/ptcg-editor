@@ -230,6 +230,9 @@ $.tcg_editor = function (context_name, orig_data) {
                         result.push('<li class="divider"></li>');
                         result.push(make_menu_item('Remove ' + current, function () {
                             scope.$apply(attrs.tcgEnumRemove);
+                            if (attrs.tcgEnumNull && scope.$eval(attrs.tcgEnumNull).length === 0) {
+                                scope.$apply(attrs.tcgEnumNull + '=null');
+                            }
                         }));
                     }
                     return result;
@@ -256,6 +259,7 @@ $.tcg_editor = function (context_name, orig_data) {
                     .attr('data-options', attrs.options)
                     .attr('data-tcg-enum', attrs.tcgTags + '[$index]')
                     .attr('data-tcg-enum-remove', attrs.tcgTags + '.splice($index, 1)')
+                    .attr('data-tcg-enum-null', attrs.tcgTags)
                     );
                 element.append($compile(elem)(scope));
                 element.append(action_button('+', function (event) {
@@ -350,7 +354,7 @@ $.tcg_editor = function (context_name, orig_data) {
             scope.$watch('card.' + attrs.tcgShowModified, function (value) {
                 var now = scope.$eval('card.' + attrs.tcgShowModified),
                     orig = scope.$eval('orig_card.' + attrs.tcgShowModified);
-                if (JSON.stringify(now) === JSON.stringify(orig)) {
+                if (JSON.stringify(now) === JSON.stringify(orig) || (now === null && orig === undefined)) {
                     element.removeClass('unsaved');
                 } else {
                     element.addClass('unsaved');
@@ -380,7 +384,11 @@ $.tcg_editor = function (context_name, orig_data) {
                 val_now = JSON.stringify(now[key]);
                 val_orig = JSON.stringify(orig[key]);
                 if (val_now !== val_orig) {
-                    diff[key] = now[key];
+                    if (val_now === undefined) {
+                        diff[key] = null;
+                    } else {
+                        diff[key] = now[key];
+                    }
                 }
             }
         }
@@ -391,7 +399,11 @@ $.tcg_editor = function (context_name, orig_data) {
 
     function apply_diff(obj, diff) {
         foreach_obj(diff, function (key, value) {
-            obj[key] = value;
+            if (value === null) {
+                delete obj[key];
+            } else {
+                obj[key] = value;
+            }
         });
     }
 
@@ -427,7 +439,7 @@ $.tcg_editor = function (context_name, orig_data) {
 
                 $(window).bind('storage', function (event) {
                     scope.$apply(function () {
-                        apply_diff(scope.card, scope.orig_card);
+                        scope.card = $.extend(true, {}, scope.orig_card);
                         apply_diff(scope.card, load_from_storage(storage_key));
                     });
                 });
