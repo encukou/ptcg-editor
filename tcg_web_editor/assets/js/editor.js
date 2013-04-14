@@ -300,6 +300,29 @@ $.tcg_editor = function (context_name, orig_data) {
             element = $(element);
             element.empty();
             element.append(container);
+
+            container.attr('contentEditable', 'true');
+            container.on('blur', function () {
+                var value = parseInt(container.text(), 10);
+                if (isNaN(value)) {
+                    if (attrs.nullable) {
+                        value = null;
+                    } else {
+                        value = 0;
+                    }
+                } else {
+                    value = Math.round(value / step) * step;
+                }
+                scope.$apply(attrs.tcgInt + '=' + angular.toJson(value));
+            }).on('keypress keydown keyup paste', function () {
+                var value = parseInt(container.text(), 10);
+                if (isNaN(value)) {
+                    return;
+                } else {
+                    scope.$apply(attrs.tcgInt + '=' + angular.toJson(value));
+                }
+            });
+
             element.append(action_button('▾', function (event) {
                 scope.$apply(function () {
                     scope.$eval(attrs.tcgInt + '=' + JSON.stringify(get_number()) + '-1');
@@ -338,10 +361,13 @@ $.tcg_editor = function (context_name, orig_data) {
             }
             scope.$watch(attrs.tcgInt, function () {
                 var value = scope.$eval(attrs.tcgInt);
-                if (typeof value === 'number') {
-                    container.text(value);
+                if (typeof value !== 'number') {
+                    value = 'N/A';
                 } else {
-                    container.text('N/A');
+                    value = value.toString();
+                }
+                if (container.text() !== value) {
+                    container.text(value);
                 }
             });
         };
