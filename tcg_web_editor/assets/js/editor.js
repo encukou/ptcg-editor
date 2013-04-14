@@ -372,15 +372,6 @@ $.tcg_editor = function (context_name, orig_data) {
 
 /*****************************************************************************/
 
-
-    function log() {
-        if (window.console) {
-            foreach_array(arguments, function (thing) {
-                window.console.log(thing);
-            });
-        }
-    }
-
     function have_html5_storage() {
         try {
             return window.localStorage !== undefined  && window.localStorage !== null;
@@ -445,52 +436,5 @@ $.tcg_editor = function (context_name, orig_data) {
             delete data[key];
             data_save();
         }
-    }
-
-    function prepare(options) {
-        var data_key = options.key,
-            orig_value = orig_data[options.key];
-        function update(value) {
-            if (value === undefined) {
-                value = options.get();
-            } else {
-                options.set(value);
-            }
-            if (JSON.stringify(orig_value) === JSON.stringify(value)) {
-                data_remove(data_key);
-                options.mark_saved();
-            } else {
-                data_set(data_key, value);
-                options.mark_unsaved();
-            }
-        }
-        function update_from_storage() {
-            if (data.hasOwnProperty(data_key)) {
-                options.set(data[data_key]);
-            } else {
-                options.set(orig_value);
-            }
-            update();
-        }
-        update_from_storage();
-        storage_listeners.push(update_from_storage);
-        return update;
-    }
-
-    function num_from_attr(attr, deflt) {
-        if (attr === undefined) {
-            return deflt;
-        }
-        return +attr;
-    }
-
-    function in_array(array, thing) {
-        var i;
-        for (i = 0; i < array.length; i += 1) {
-            if (array[i] === thing) {
-                return true;
-            }
-        }
-        return false;
     }
 };
