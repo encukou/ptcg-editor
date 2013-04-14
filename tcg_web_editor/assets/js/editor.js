@@ -135,14 +135,10 @@ $.tcg_editor = function (context_name, orig_data) {
     angular.module('tcg', []);
 
     angular.module('tcg').controller('tcgCardCtrl', function ($scope) {
-        var card = {},
-            orig_card = {};
-        $scope.card = card;
-        $scope.orig_card = orig_card;
-        foreach_obj(orig_data, function (key, value) {
-            card[key] = value;
-            orig_card[key] = JSON.parse(JSON.stringify(value));
-        });
+        $scope.card = {}
+        $scope.orig_card = {}
+        jQuery.extend(true, $scope.card, orig_data);
+        jQuery.extend(true, $scope.orig_card, orig_data);
     });
 
     angular.module('tcg').directive('tcgStr', function () {
