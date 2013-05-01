@@ -1,4 +1,7 @@
 <%inherit file="base.mako" />
+<%!
+from markupsafe import Markup
+%>
 
 <div class="container">
 
@@ -18,23 +21,17 @@
         </tr>
     </thead>
     <tbody>
-    % for print_ in this.set.prints:
+    % for set_print in this.set.set_prints:
         <tr>
-            <td>${print_.set_number}</td>
+            <td>${Markup('&mdash;') if set_print.number is None else set_print.number}</td>
             <td>
-                <a href="${wrap(print_).url}">
+                <a href="${wrap(set_print).url}">
                     <span class="muted">
-                    % if print_.card.class_.identifier == 'pokemon':
-                        % for t in print_.card.types:
-                            ${h.type_icon(t)}
-                        % endfor
-                    % else:
-                        ${h.class_icon(print_.card.class_)}
-                    % endif
+                    ${h.card_icon(set_print.print_.card)}
                     </span>
-                    ${print_.card.name}
+                    ${set_print.print_.card.name}
                     <span class="muted">
-                        ${h.card_named_mechanic_note(print_.card)}
+                        ${h.card_named_mechanic_note(set_print.print_.card)}
                     </span>
                 </a>
             </td>

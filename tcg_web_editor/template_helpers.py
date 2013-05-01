@@ -42,9 +42,18 @@ def type_icon(type):
         ).format(type=type)
 
 def class_icon(cls):
-    return Markup(
-        '<span class="ptcg-cardclass" title="{cls.name}">{cls.name[0]}</span>'
-        ).format(cls=cls)
+    if cls:
+        return Markup(
+            '<span class="ptcg-cardclass" title="{cls.name}">{cls.name[0]}</span>'
+            ).format(cls=cls)
+
+def card_icon(card):
+    if not card.class_:
+        return Markup('<span class="ptcg-cardclass">&nbsp;</span>')
+    elif card.class_.identifier == 'pokemon':
+        return Markup().join(type_icon(t) for t in card.types)
+    else:
+        return class_icon(card.class_)
 
 def asset_url_factory(request):
     def asset_url(url):

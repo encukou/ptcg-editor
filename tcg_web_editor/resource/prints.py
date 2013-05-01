@@ -33,10 +33,25 @@ class Print(TemplateResource):
 
     @reify
     def name(self):
-        return '{}~{}'.format(
-            self.print_.set.identifier,
-            self.print_.set_number.lower(),
-        )
+        return str(self.print_.id)
+
+    @reify
+    def friendly_name(self):
+        return self.print_.card.name
+
+    @reify
+    def short_name(self):
+        return self.print_.card.name
+
+    def __json__(self):
+        return load.export_print(self.print_)
+
+
+@exporting
+class SetPrint(Print):
+    def __init__(self, parent, set_print):
+        self.set_print = set_print
+        super(SetPrint, self).__init__(parent, set_print.print_)
 
     @reify
     def friendly_name(self):
@@ -44,29 +59,39 @@ class Print(TemplateResource):
 
     @reify
     def short_name(self):
-        return '{} #{}'.format(self.print_.set.name, self.print_.set_number)
+        if self.set_print.number is None:
+            return self.set_print.set.name
+        else:
+            return '{} #{}'.format(self.set_print.set.name, self.set_print.number)
+
+    @reify
+    def name(self):
+        if self.set_print.number:
+            return '{}~{}'.format(
+                self.set_print.set.identifier,
+                self.set_print.number.lower(),
+            )
+        else:
+            return '{}~'.format(self.set_print.set.identifier)
 
     def __call__(self):
-        query = self.request.db.query(tcg_tables.Print)
-        query = query.filter(tcg_tables.Print.set == self.print_.set)
-        query = query.options(joinedload_all('card.family.names_local'))
+        query = self.request.db.query(tcg_tables.SetPrint)
+        query = query.filter(tcg_tables.SetPrint.set == self.set_print.set)
+        query = query.options(joinedload_all('print_.card.family.names_local'))
 
-        num = self.print_.order
-        query = query.filter(tcg_tables.Print.order.in_([num + 1, num - 1]))
-        prev_print = next_print = None
-        for p in query:
-            if p.order == num - 1:
-                prev_print = p
-            elif p.order == num + 1:
-                next_print = p
+        num = self.set_print.order
+        query = query.filter(tcg_tables.SetPrint.order.in_([num + 1, num - 1]))
+        prev_set_print = next_set_print = None
+        for sp in query:
+            if sp.order == num - 1:
+                prev_set_print = sp
+            elif sp.order == num + 1:
+                next_set_print = sp
 
         return self.render_response(
-            prev_print=prev_print,
-            next_print=next_print,
+            prev_set_print=prev_set_print,
+            next_set_print=next_set_print,
         )
-
-    def __json__(self):
-        return load.export_print(self.print_)
 
 
 class FamilyNamesJson(Resource):
@@ -130,10 +155,10 @@ class Families(TemplateResource):
         query = self.family_query.filter(
             tcg_tables.CardFamily.identifier == family_identifier)
         query = query.options(joinedload_all('cards.class_.names_local'))
-        query = query.options(joinedload_all('cards.prints.set.names_local'))
+        query = query.options(joinedload_all('cards.prints.set_prints.set.names_local'))
         query = query.options(joinedload_all('cards.card_mechanics.mechanic.names_local'))
         query = query.options(joinedload_all('cards.card_types.type.names_local'))
-        query = query.options(subqueryload('cards.prints.set'))
+        query = query.options(subqueryload('cards.prints.set_prints'))
         query = query.options(subqueryload('cards.card_mechanics'))
         query = query.options(subqueryload('cards.card_types'))
         try:
@@ -326,58 +351,93 @@ class Family(TemplateResource):
     @reify
     def query(self):
         query = self.request.db.query(tcg_tables.Print)
-        query = query.join(tcg_tables.Print.set)
         query = query.join(tcg_tables.Print.card)
         query = query.filter(tcg_tables.Card.family == self.family)
         return query
 
     def get(self, set_and_number):
         try:
-            set_identifier, number = set_and_number.split('~')
+            print_id = int(set_and_number)
         except ValueError:
-            raise LookupError('Must include a ~ character')
+            try:
+                set_identifier, number = set_and_number.split('~')
+                if not number:
+                    number = None
+            except ValueError:
+                raise LookupError('Must be numeric, or include a ~ character')
+        else:
+            set_identifier = number = None
         query = self.query
-        query = query.filter(tcg_tables.Set.identifier == set_identifier)
-        query = query.filter(func.lower(tcg_tables.Print.set_number) == number)
-        query = query.options(joinedload_all('card.family.names_local'))
-        query = query.options(joinedload_all('card.card_subclasses.subclass.names_local'))
-        query = query.options(joinedload_all('rarity.names_local'))
-        query = query.options(joinedload_all('pokemon_flavor.flavor_local'))
-        query = query.options(joinedload_all('pokemon_flavor.species.names_local'))
-        query = query.options(joinedload_all('card.card_mechanics.mechanic.effects_local'))
-        query = query.options(joinedload_all('card.card_mechanics.mechanic.class_.names_local'))
-        query = query.options(joinedload_all('card.card_types.type.names_local'))
-        query = query.options(joinedload_all('card.stage.names_local'))
-        query = query.options(joinedload_all('print_illustrators.illustrator'))
-        query = query.options(joinedload_all('card.evolutions.family.names_local'))
-        query = query.options(joinedload_all('card.family.evolutions.card.family.names_local'))
-        query = query.options(joinedload_all('card.family.evolutions.card.prints.set.names_local'))
-        query = query.options(joinedload_all('card.family.evolutions.card.card_mechanics.mechanic.names_local'))
-        query = query.options(joinedload_all('card.card_mechanics.mechanic.costs.type.names_local'))
-        query = query.options(joinedload_all('card.damage_modifiers.type.names_local'))
-        query = query.options(subqueryload('card.card_mechanics'))
-        query = query.options(subqueryload('card.card_mechanics.mechanic.costs'))
-        query = query.options(subqueryload('card.card_subclasses'))
-        query = query.options(subqueryload('card.prints'))
-        query = query.options(subqueryload('card.damage_modifiers'))
-        query = query.options(subqueryload('card.family.evolutions'))
-        query = query.options(subqueryload('card.family.evolutions.card.prints'))
-        query = query.options(subqueryload('card.family.evolutions.card.card_mechanics'))
-        query = query.options(subqueryload('card.family.cards.prints'))
-        query = query.options(subqueryload('scans'))
-        query = query.options(lazyload('pokemon_flavor.species.default_pokemon'))
-        query = query.options(lazyload('pokemon_flavor.species.evolutions'))
+        if set_identifier:
+            query = self.request.db.query(tcg_tables.SetPrint)
+            query = query.join(tcg_tables.SetPrint.set)
+            query = query.join(tcg_tables.SetPrint.print_)
+            query = query.join(tcg_tables.Print.card)
+            query = query.filter(tcg_tables.Card.family == self.family)
+            query = query.filter(tcg_tables.Set.identifier == set_identifier)
+            query = query.filter(func.lower(tcg_tables.SetPrint.number) == number)
+            query = query.options(lazyload('print_'))
+        else:
+            query = query.filter(tcg_tables.Print.id == print_id)
+        for prop in (
+                'card.card_subclasses.subclass.names_local',
+                'rarity.names_local',
+                'pokemon_flavor.flavor_local',
+                'pokemon_flavor.species.names_local',
+                'card.card_mechanics.mechanic.effects_local',
+                'card.card_mechanics.mechanic.class_.names_local',
+                'card.card_types.type.names_local',
+                'card.stage.names_local',
+                'print_illustrators.illustrator',
+                'card.evolutions.family.names_local',
+                'card.family.evolutions.card.family.names_local',
+                'card.family.evolutions.card.prints.set_prints.set.names_local',
+                'card.family.evolutions.card.card_mechanics.mechanic.names_local',
+                'card.card_mechanics.mechanic.costs.type.names_local',
+                'card.damage_modifiers.type.names_local'):
+            if set_identifier:
+                prop = 'print_.' + prop
+            query = query.options(joinedload_all(prop))
+        for prop in (
+                'card.card_mechanics',
+                'card.card_mechanics.mechanic.costs',
+                'card.card_subclasses',
+                'card.prints',
+                'card.damage_modifiers',
+                'card.family.evolutions',
+                'card.family.evolutions.card.prints',
+                'card.family.evolutions.card.card_mechanics',
+                'card.family.cards.prints',
+                'scans'):
+            if set_identifier:
+                prop = 'print_.' + prop
+            query = query.options(subqueryload(prop))
+        for prop in (
+                'pokemon_flavor.species.default_pokemon',
+                'pokemon_flavor.species.evolutions'):
+            if set_identifier:
+                prop = 'print_.' + prop
+            query = query.options(lazyload(prop))
         try:
-            print_ = query[0]
+            print_or_set_print = query[0]
         except NoResultFound:
             raise LookupError('No such print')
-        return self.wrap(print_)
+        return self.wrap(print_or_set_print)
 
-    def wrap(self, print_):
+    def wrap(self, print_or_set_print):
+        if isinstance(print_or_set_print, tcg_tables.SetPrint):
+            print_ = print_or_set_print.print_
+        else:
+            print_ = print_or_set_print
         if print_.card.family is not self.family:
-            return self.root.wrap(print_.card.family).wrap(print_)
-        return Print(self, print_)
+            return self.root.wrap(print_.card.family).wrap(print_or_set_print)
+        if print_ is print_or_set_print:
+            return Print(self, print_or_set_print)
+        else:
+            return SetPrint(self, print_or_set_print)
 
     def iter_dynamic(self):
-        for entity in self.query:
-            yield self.wrap(entity)
+        for print_ in self.query:
+            yield self.wrap(print_)
+            for set_print in print_.set_prints:
+                yield self.wrap(set_print)

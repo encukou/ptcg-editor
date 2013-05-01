@@ -31,12 +31,12 @@ class Sets(TemplateResource):
         query = self.query
         query = query.filter_by(identifier=set_ident)
         query = query.options(joinedload('names_local'))
-        query = query.options(joinedload_all('prints.card.family.names_local'))
-        query = query.options(joinedload_all('prints.card.class_.names_local'))
-        query = query.options(joinedload_all('prints.card.card_types.type.names_local'))
-        query = query.options(joinedload_all('prints.card.card_mechanics.mechanic.names_local'))
-        query = query.options(subqueryload('prints'))
-        query = query.options(subqueryload('prints.card.card_mechanics'))
+        query = query.options(joinedload_all('set_prints.print_.card.family.names_local'))
+        query = query.options(joinedload_all('set_prints.print_.card.class_.names_local'))
+        query = query.options(joinedload_all('set_prints.print_.card.card_types.type.names_local'))
+        query = query.options(joinedload_all('set_prints.print_.card.card_mechanics.mechanic.names_local'))
+        query = query.options(subqueryload('set_prints.print_'))
+        query = query.options(subqueryload('set_prints.print_.card.card_mechanics'))
         try:
             tcg_set = query.one()
         except NoResultFound:
@@ -75,16 +75,17 @@ class Illustrators(TemplateResource):
         query = self.request.db.query(tcg_tables.Illustrator)
         query = query.order_by(tcg_tables.Illustrator.name)
         for key in (
-                'print_illustrators.print_.set.names_local',
+                'print_illustrators.print_.set_prints.set.names_local',
                 'print_illustrators.print_.card.family.names_local',
                 'print_illustrators.print_.card.class_',
                 'print_illustrators.print_.card.card_types.type.names_local',
                 'print_illustrators.print_.card.card_mechanics.mechanic.names_local',
             ):
             query = query.options(joinedload_all(key))
+        query = query.options(lazyload('print_illustrators'))
+        query = query.options(subqueryload('print_illustrators.print_.set_prints'))
         query = query.options(subqueryload('print_illustrators.print_.card.card_types'))
         query = query.options(subqueryload('print_illustrators.print_.card.card_mechanics'))
-        query = query.options(lazyload('print_illustrators'))
         self.illustrator_query = query
 
     def get(self, ident):
@@ -133,6 +134,8 @@ class Root(TemplateResource):
             return self['sets'].wrap(obj)
         elif isinstance(obj, tcg_tables.Print):
             return self.wrap(obj.card.family).wrap(obj)
+        elif isinstance(obj, tcg_tables.SetPrint):
+            return self.wrap(obj.print_.card.family).wrap(obj)
         elif isinstance(obj, tcg_tables.CardFamily):
             return self['cards'].wrap(obj)
         elif isinstance(obj, tcg_tables.Illustrator):

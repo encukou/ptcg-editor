@@ -1,5 +1,7 @@
 <%inherit file="base.mako" />
 <%!
+from markupsafe import Markup
+
 from ptcgdex import tcg_tables
 %>
 
@@ -18,19 +20,14 @@ from ptcgdex import tcg_tables
     <tbody>
     % for pi in this.illustrator.print_illustrators:
         <% print_ = pi.print_ %>
+    % for set_print in print_.set_prints:
         <tr>
-            <td>${link(print_.set)}</td>
-            <td>${print_.set_number}</td>
+            <td>${link(set_print.set)}</td>
+            <td>${Markup('&mdash;') if set_print.number is None else set_print.number}</td>
             <td>
-                <a href="${wrap(print_).url}">
+                <a href="${wrap(set_print).url}">
                     <span class="muted">
-                    % if print_.card.class_.identifier == 'pokemon':
-                        % for t in print_.card.types:
-                            ${h.type_icon(t)}
-                        % endfor
-                    % else:
-                        ${h.class_icon(print_.card.class_)}
-                    % endif
+                    ${h.card_icon(print_.card)}
                     </span>
                     ${print_.card.name}
                     <span class="muted">
@@ -39,6 +36,7 @@ from ptcgdex import tcg_tables
                 </a>
             </td>
         </tr>
+    % endfor
     % endfor
     </tbody>
     </table>

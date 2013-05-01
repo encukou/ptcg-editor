@@ -2,13 +2,16 @@
 <%!
 import string
 
-def print_sort_key(p):
-    return p.set.id, p.set_number
+def set_print_sort_key(sp):
+    return sp.set.id, sp.number, sp.print_.id
 %>
 
 <%
-prints = [p for c in this.family.cards for p in c.prints]
-prints.sort(key=print_sort_key)
+set_prints = [sp
+              for c in this.family.cards
+              for p in c.prints
+              for sp in p.set_prints]
+set_prints.sort(key=set_print_sort_key)
 %>
 
 <div class="container">
@@ -32,24 +35,22 @@ prints.sort(key=print_sort_key)
         alphabet = iter(string.ascii_uppercase)
         seen_mechanic_notes = set()
     %>
-    % for print_ in prints:
+    % for set_print in set_prints:
     <%
-        first_print = min(print_.card.prints, key=print_sort_key)
+        print_ = set_print.print_
+        other_set_prints = [sp
+                            for p in set_print.print_.card.prints
+                            for sp in p.set_prints]
+        first_set_print = min(other_set_prints, key=set_print_sort_key)
         mechanic_note = h.card_named_mechanic_note(print_.card)
     %>
     <tr>
-        <td>${link(print_.set)}</td>
-        <td>${print_.set_number}</td>
+        <td>${link(set_print.set)}</td>
+        <td>${set_print.number}</td>
         <td class="warning">
-            <a href="${wrap(print_).url}">
+            <a href="${wrap(set_print).url}">
                 <span class="muted">
-                % if print_.card.class_.identifier == 'pokemon':
-                    % for t in print_.card.types:
-                        ${h.type_icon(t)}
-                    % endfor
-                % else:
-                    ${h.class_icon(print_.card.class_)}
-                % endif
+                ${h.card_icon(print_.card)}
                 </span>
                 ${print_.card.name}
                 <span class="muted">${mechanic_note}</span>
@@ -67,7 +68,7 @@ prints.sort(key=print_sort_key)
             % endif
         </td>
         <td>
-            % if print_ is first_print:
+            % if set_print is first_set_print:
                 % if mechanic_note in seen_mechanic_notes:
                     <span class="label label-warning tooltipped"
                         title="Rogue reprint?"

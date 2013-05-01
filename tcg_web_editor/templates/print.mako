@@ -3,18 +3,26 @@
 import json
 
 from markupsafe import Markup
+from sqlalchemy.orm import joinedload
 
 from ptcgdex import tcg_tables
 %>
 
 <%
 print_ = this.print_
+set_print = getattr(this, 'set_print', None)
 card = print_.card
 flavor = print_.pokemon_flavor
 %>
 
 <div class="container">
-    <h1>${print_.card.name} <small>${print_.set.name} #${print_.set_number}</small></h1>
+    <h1>${print_.card.name}
+    % if set_print:
+        <small>${wrap(set_print).short_name}</small>
+    % else:
+        <small>(not as part of a set)</small>
+    % endif:
+    </h1>
 
     <ul class="nav nav-tabs">
     <li><a href="#edittabs-view" data-toggle="tab">View</a></li>
@@ -38,25 +46,25 @@ flavor = print_.pokemon_flavor
             <dd class="span4" data-tcg-str="card.name" data-tcg-show-modified="name">${card.name}</dd>
             <dt class="span2">Card class</dt>
             <dd class="span4" data-tcg-enum="card.class" data-tcg-show-modified="class"
-                data-options="${json.dumps([(c.name[0], c.name) for c in request.db.query(tcg_tables.Class)])}"
-                >${card.class_.name}</dd>
+                data-options="${json.dumps([(c.name[0], c.name) for c in request.db.query(tcg_tables.Class).options(joinedload('names_local'))])}"
+                >${card.class_.name if card.class_ else '?'}</dd>
         </dl>
         <dl class="row-fluid">
             <dt class="span2" data-ng-bind="'Subclass' + ((card.subclasses.length == 1) &amp;&amp; ' ' || 'es')">${'Subclass' if len(card.subclasses) == 1 else 'Subclasses'}</dt>
             <dd class="span10" data-tcg-tags="card.subclasses" data-tcg-show-modified="subclasses"
                 data-display-separator=", "
-                data-options="${json.dumps([(c.name, c.name) for c in request.db.query(tcg_tables.Subclass)])}"
+                data-options="${json.dumps([(c.name, c.name) for c in request.db.query(tcg_tables.Subclass).options(joinedload('names_local'))])}"
                 >${', '.join(sc.name for sc in card.subclasses) or Markup('&nbsp;')}</dd>
         </dl>
         <dl class="row-fluid">
             <dt class="span2">Type</dt>
             <dd class="span4" data-tcg-tags="card.types" data-tcg-show-modified="types"
                 data-display-separator="/"
-                data-options="${json.dumps([(c.name, c.name) for c in request.db.query(tcg_tables.TCGType)])}"
+                data-options="${json.dumps([(c.name, c.name) for c in request.db.query(tcg_tables.TCGType).options(joinedload('names_local'))])}"
                 >${'/'.join(t.name for t in card.types) or Markup('&nbsp;')}</dd>
             <dt class="span2">Stage</dt>
             <dd class="span4" data-tcg-enum="card.stage" data-tcg-show-modified="stage"
-                data-options="${json.dumps([('', u'N/A')] + [(c.name, c.name) for c in request.db.query(tcg_tables.Stage)])}"
+                data-options="${json.dumps([('', u'N/A')] + [(c.name, c.name) for c in request.db.query(tcg_tables.Stage).options(joinedload('names_local'))])}"
                 >${card.stage.name if card.stage else 'N/A'}</dd>
         </dl>
         <dl class="row-fluid">
@@ -114,7 +122,9 @@ flavor = print_.pokemon_flavor
                     <span class="muted">
                         ${h.card_named_mechanic_note(evo.card)}:
                         ${', '.join('{} #{}'.format(
-                            p.set.name, p.set_number) for p in evo.card.prints)}
+                            sp.set.name, sp.number)
+                                for p in evo.card.prints
+                                for sp in p.set_prints)}
                     </span>
                 </a>
             </dd>
@@ -172,7 +182,7 @@ flavor = print_.pokemon_flavor
         % endif
         <dl class="row-fluid">
             <dt class="span2">Rarity</dt>
-            <dd class="span4">${print_.rarity.name}</dd>
+            <dd class="span4">${print_.rarity.name if print_.rarity else '?'}</dd>
             <dt class="span2">Holographic</dt>
             <dd class="span4">${'Yes' if print_.holographic else 'No'}</dd>
         </dl>
@@ -182,20 +192,28 @@ flavor = print_.pokemon_flavor
         </dl>
 
         <h2>Sets &amp; Reprints</h2>
+        % if set_print:
         <dl class="row-fluid">
             <dt class="span2">Set</dt>
-            <dd class="span4">${link(print_.set)}</dd>
-            <dt class="span2">Number</dt>
-            <dd class="span4">${print_.set_number}${
-                '/{}'.format(print_.set.total) if print_.set.total else ''}</dd>
+            <dd class="span4">${link(set_print.set)}</dd>
+            % if set_print.number is not None:
+                <dt class="span2">Number</dt>
+                <dd class="span4">${set_print.number}${
+                    '/{}'.format(set_print.set.total) if set_print.set.total else ''}</dd>
+            % endif
         </dl>
+        % endif
         % if len(card.prints) > 1:
             <dl class="row-fluid">
-                <dt class="span2">Also printed as</dt>
+                % if set_print:
+                    <dt class="span2">Also printed as</dt>
+                % else:
+                    <dt class="span2">Printed as</dt>
+                % endif
                 <dd class="span10">
-                % for other_print in [p for p in card.prints if p is not print_]:
-                    <a href="${wrap(other_print).url}">
-                        ${other_print.set.name} #${other_print.set_number}
+                % for other_set_print in card.set_prints:
+                    <a href="${wrap(other_set_print).url}">
+                        ${wrap(other_set_print).short_name}
                     </a>
                     % if not loop.last:
                         &amp;
@@ -209,22 +227,19 @@ flavor = print_.pokemon_flavor
             <h2>Other ${card.name} cards</h2>
             <div class="row-fluid">
                 <div class="well">
-                % for other_card in card.family.cards:
-                    <%
-                        other_print = other_card.prints[0]
-                    %>
+                % for other_set_print in card.family.set_prints:
                     <div class="row-fluid">
                         <span class="span12">
-                            % if other_card is card:
-                                ${other_print.set.name} #${other_print.set_number}
+                            % if other_set_print.print_ is print_:
+                                ${wrap(other_set_print).short_name}
                             % else:
-                            <a href="${wrap(other_print).url}">
-                                ${other_print.set.name} #${other_print.set_number}
+                            <a href="${wrap(other_set_print).url}">
+                                ${wrap(other_set_print).short_name}
                             </a>
                             % endif
                             –
-                            ${other_card.name}
-                            ${h.card_named_mechanic_note(other_card)}
+                            ${other_set_print.card.name}
+                            ${h.card_named_mechanic_note(other_set_print.card)}
                         </span>
                     </div>
                 % endfor
@@ -240,9 +255,9 @@ flavor = print_.pokemon_flavor
 
     </div>
     <div class="span2">
-    %if print_.scans:
-    <a href="/scans/${print_.set.identifier}/${print_.scans[0].filename}.jpg">
-        <img src="/scans/${print_.set.identifier}/${print_.scans[0].filename}.jpg"
+    % if set_print and print_.scans:
+    <a href="/scans/${set_print.set.identifier}/${print_.scans[0].filename}.jpg">
+        <img src="/scans/${set_print.set.identifier}/${print_.scans[0].filename}.jpg"
             alt="Card scan">
     </a>
     % endif
@@ -275,23 +290,25 @@ flavor = print_.pokemon_flavor
 </div>
 </div>
 
+% if set_print:
 <div class="container">
     <ul class="pager">
-        % if prev_print:
+        % if prev_set_print:
         <li class="previous">
-            <a href="${wrap(prev_print).url}">← ${prev_print.card.name}</a>
+            <a href="${wrap(prev_set_print).url}">← ${prev_set_print.print_.card.name}</a>
         </li>
         % endif
         <li>
-            <a href="${wrap(print_.set).url}">${print_.set.name}</a>
+            <a href="${wrap(set_print.set).url}">${set_print.set.name}</a>
         </li>
-        % if next_print:
+        % if next_set_print:
         <li class="next">
-            <a href="${wrap(next_print).url}">${next_print.card.name} →</a>
+            <a href="${wrap(next_set_print).url}">${next_set_print.print_.card.name} →</a>
         </li>
         % endif
     </ul>
 </div>
+% endif
 
 <%def name="extra_css()">
     <link href="${asset_url('css/editor.css')}" rel="stylesheet" />
