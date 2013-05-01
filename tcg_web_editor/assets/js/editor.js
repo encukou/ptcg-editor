@@ -75,6 +75,7 @@ $.tcg_editor = function (context_name, orig_data) {
 
     function hide_menu() {
         if (currently_displayed_menu) {
+            currently_displayed_menu.trigger('tcg-menu-close');
             currently_displayed_menu.remove();
             currently_displayed_menu = null;
         }
@@ -145,7 +146,7 @@ $.tcg_editor = function (context_name, orig_data) {
         item = $('<li><a></a></li>');
         item.find('a').text(text);
         item.click(function (event) {
-            onclick();
+            onclick(event);
             hide_menu();
             event.stopPropagation();
         });
@@ -395,6 +396,66 @@ $.tcg_editor = function (context_name, orig_data) {
         };
     });
 
+    function capitalize(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    tcg.directive('tcgEvolutions', function ($compile) {
+        return function (scope, element, attrs) {
+            element = $(element);
+            element.empty();
+            foreach_array(['evolves from', 'evolves to'], function(ev) {
+                var full_attr = attrs.tcgEvolutions + "['" + ev + "']",
+                    replacement;
+                replacement = $('<div data-ng-repeat="mod in ' + full_attr + '"></div>');
+                replacement.append($('<dl class="row-fluid"></dl>')
+                    .append($('<dt class="span2">' + capitalize(ev) + '</dt>')
+                        .attr('data-tcg-remove-from', full_attr))
+                    .append($('<dd class="span4" data-tcg-show-modified="' + full_attr + '[$index]"></dd>')
+                        .append($('<a href="' + attrs.linkBase + '/{{' + full_attr + '[$index]}}"></a>')
+                            .append('{{' + full_attr + '[$index]}}'))
+                        .attr('data-link-base', attrs.dataLinkBase)
+                        .attr('data-tcg-evolution', full_attr + '[{{$index}}]')
+                    )
+                );
+                element.append($compile(replacement)(scope));
+            });
+        };
+    });
+
+    tcg.directive('tcgEvolution', function ($compile) {
+        return function (scope, element, attrs) {
+            element = $(element);
+            element.append(action_button('✎', function (event) {
+                var menu = $('<div class="dropdown-menu"></div>'),
+                    menu_in = $('<ul class="dropdown-menu-in" role="menu" aria-labelledby="dropdownMenu"></ul>'),
+                    typebox = $('<input type="search" z="{{$index}}">'), //.attr('data-ng-model', attrs.tcgEvolution),
+                    closest = element; //.closest('*[data-tcg-evolutions]');
+                closest.addClass('dropdown open');
+                menu.append(menu_in);
+                element.append(menu);
+                closest.append(menu);
+                currently_displayed_menu = menu;
+                menu.on('tcg-menu-close', function () {
+                    scope.$apply(attrs.tcgEvolution + '=' + angular.toJson(typebox.val()));
+                });
+                event.stopPropagation();
+
+                menu_in.before($compile(typebox)(scope));
+                typebox.on('click', function (event) {
+                    event.stopPropagation();
+                }).on('keydown', function (event) {
+                    if (event.which === 13) {
+                        hide_menu();
+                    }
+                });
+                typebox.focus();
+                typebox.val(scope.$eval(attrs.tcgEvolution));
+                typebox.select(false);
+            }));
+        };
+    });
+
     tcg.directive('tcgRemoveFrom', function ($compile) {
         return function (scope, element, attrs) {
             element = $(element);
@@ -418,24 +479,34 @@ $.tcg_editor = function (context_name, orig_data) {
             element.css('cursor', 'default');
             element.append(action_button('+', function (event) {
                 popup_menu(event, element, function () {
+                    var push_func = function (key, default_) {
+                        scope.$apply(function () {
+                            if(!scope.card[key]) {
+                                scope.card[key] = [];
+                            }
+                            scope.card[key].push(default_);
+                        });
+                    }
                     return [
                         make_menu_item('Add Weakness', function () {
-                            scope.$apply(function () {
-                                scope.card['damage modifiers'].push({
-                                    amount: 2,
-                                    operation: '×',
-                                    type: 'Fire'
-                                });
+                            push_func('damage modifiers', {
+                                amount: 2,
+                                operation: '×',
+                                type: 'Fire'
                             });
                         }),
                         make_menu_item('Add Resistance', function () {
-                            scope.$apply(function () {
-                                scope.card['damage modifiers'].push({
-                                    amount: 20,
-                                    operation: '-',
-                                    type: 'Fire'
-                                });
+                            push_func('damage modifiers', {
+                                amount: 20,
+                                operation: '-',
+                                type: 'Fire'
                             });
+                        }),
+                        make_menu_item('Add Evolves From', function () {
+                            push_func('evolves from', 'Bill');
+                        }),
+                        make_menu_item('(Add Evolves To)', function () {
+                            push_func('evolves to', 'Bill');
                         })
                     ];
                 });

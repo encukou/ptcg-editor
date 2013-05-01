@@ -93,6 +93,7 @@ flavor = print_.pokemon_flavor
             % endfor
         </div>
 
+        <div data-tcg-evolutions="card" data-link-base="${this.root['cards'].url}">
         % for evo in card.evolutions:
         <dl class="row-fluid">
             <dt class="span2">
@@ -107,6 +108,7 @@ flavor = print_.pokemon_flavor
             </dd>
         </dl>
         % endfor
+        </div>
         % for evo in card.family.evolutions:
         <dl class="row-fluid">
             <dt class="span2 muted">
