@@ -10,7 +10,8 @@ import re
 
 from pyramid.response import Response
 from pyramid.decorator import reify
-from pyramid.httpexceptions import HTTPMovedPermanently, HTTPNotFound
+from pyramid.httpexceptions import (HTTPMovedPermanently, HTTPNotFound,
+                                    HTTPForbidden)
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 from markupsafe import Markup
@@ -66,6 +67,23 @@ class Print(TemplateResource):
 
     def __json__(self):
         return load.export_print(self.print_)
+
+
+class FamilyNamesJson(Resource):
+    template_name = 'family.mako'
+
+    def __call__(self):
+        substr = self.request.GET.get('query', '')
+        if len(substr) > 1 and '?' not in substr and '%' not in substr:
+            query = self.request.db.query(tcg_tables.CardFamily)
+            query = query.outerjoin(tcg_tables.CardFamily.names_local)
+            print tcg_tables.CardFamily.names_table.name, type(tcg_tables.CardFamily.names_table.name)
+            query = query.filter(tcg_tables.CardFamily.names_table.name.like(
+                '%{}%'.format(substr)))
+            text = json.dumps(sorted([f.name for f in query]))
+            return Response(text)
+        else:
+            raise HTTPForbidden()
 
 
 class Families(TemplateResource):
@@ -149,6 +167,8 @@ class Families(TemplateResource):
         if not self.first_letter:
             for letter in string.ascii_lowercase:
                 yield self[letter]
+
+    child_namelist = FamilyNamesJson
 
 
 class BadInput(ValueError):
