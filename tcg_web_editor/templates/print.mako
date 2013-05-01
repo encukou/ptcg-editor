@@ -42,7 +42,7 @@ flavor = print_.pokemon_flavor
                 >${card.class_.name}</dd>
         </dl>
         <dl class="row-fluid">
-            <dt class="span2">${'Subclass' if len(card.subclasses) == 1 else 'Subclasses'}</dt>
+            <dt class="span2" data-ng-bind="'Subclass' + ((card.subclasses.length == 1) &amp;&amp; ' ' || 'es')">${'Subclass' if len(card.subclasses) == 1 else 'Subclasses'}</dt>
             <dd class="span10" data-tcg-tags="card.subclasses" data-tcg-show-modified="subclasses"
                 data-display-separator=", "
                 data-options="${json.dumps([(c.name, c.name) for c in request.db.query(tcg_tables.Subclass)])}"
